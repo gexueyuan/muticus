@@ -1,0 +1,2 @@
+---- UART1_RX_DMA Matches (1 in 1 files) ----
+Usart.c (e:\wxw_kp\svn_company_only\svn_project\trunk\muticusproject\bsp):#define UART1_RX_DMA		DMA1_Channel5
