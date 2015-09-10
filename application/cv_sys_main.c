@@ -53,7 +53,7 @@ extern int rt_key_init(void);
 extern void mda_init(void);
 extern void voc_init(void);
 extern void cpu_usage_init(void);
-extern void audio_init(void);
+extern uint8_t syn6288_hw_init(void);
 extern uint8_t IOE_Config(void);
 cms_global_t cms_envar, *p_cms_envar;
 
@@ -99,7 +99,7 @@ void rt_init_thread_entry(void *parameter)
     
    
 		
-    audio_init();
+   syn6288_hw_init();
     
     wnet_init();
     vam_init();

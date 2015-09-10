@@ -18,6 +18,7 @@
 //#include "gpio.h"
 #include <rtthread.h>
 #include "finsh.h"
+#include "components.h"
 
 
 #define SYN6288_DEVICE_NAME	"uart4"
@@ -26,71 +27,78 @@
 
 #define SYN6288_IDLE  0x4F
 
+#define SYN_CLK   RCC_AHB1Periph_GPIOE
+#define SYN_PIN   GPIO_Pin_2
+#define SYN_PORT  GPIOE
+
+typedef enum _BAUDRATE_SYN6288 {
+    BAUDRATE_SYN6288_9600 = 0,
+    BAUDRATE_SYN6288_19200,
+    BAUDRATE_SYN6288_38400,
+} E_BAUDRATE_SYN6288;
 
 
-void syn6288_set_baudrate(int baud)
+static rt_device_t syn6288_dev;
+
+
+
+void audio_enble(void)
 {
-
-
-
-
-
-
+    GPIO_SetBits(SYN_PORT, SYN_PIN);
 }
 
-
-
-
+void audio_disable(void)
+{
+    GPIO_ResetBits(SYN_PORT, SYN_PIN);
+}
 
 void audio_io_init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure = { 0 };
     
     
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+    RCC_AHB1PeriphClockCmd(SYN_CLK, ENABLE);
 
     /* Sound en enable*/
-    GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_2;
+    GPIO_InitStructure.GPIO_Pin =  SYN_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_DOWN;
     
-    GPIO_Init(GPIOE, &GPIO_InitStructure);
+    GPIO_Init(SYN_PORT, &GPIO_InitStructure);
     
-    GPIO_SetBits(GPIOE, GPIO_Pin_2);
+    audio_disable();//after init ,disable audio output
 }
 
-void play_test(void)
+
+
+
+void syn6288_set_baudrate(E_BAUDRATE_SYN6288 baud)
 {
-
-    uint8_t test[] = {0xFD,0x00,0x0B,0x01,0x00,0xD3,0xEE,0xD2,0xF4,0xCC,0xEC,0xCF,0xC2,0xC1};
-    //uint8_t serch[] = {0xFD,0x00,0x02,0x21,0xDE};
+    uint8_t baud_char[] = {0xfd,0x00,0x03,0x31,0x00,0xcf};
     
-    rt_device_t dev;
-    uint8_t tmp;
+    uint8_t temp;
 
-    dev = rt_device_find(SYN6288_DEVICE_NAME);
-    rt_device_open(dev,RT_DEVICE_OFLAG_RDWR | RT_DEVICE_FLAG_STREAM);
-    tmp = rt_device_write(dev,0,test,sizeof(test));
+    baud_char[4] = baud;
 
-    if(tmp == sizeof(test))
-        rt_kprintf("play success!!\n");
+    baud_char[5] = baud_char[5] - baud;
+    
+    temp = rt_device_write(syn6288_dev,0,baud_char,sizeof(baud_char));
 
-    rt_kprintf("return %d\n",tmp);
+    if(temp != sizeof(baud_char))
+        rt_kprintf("data of audio miss!!\n");
 }
 
-FINSH_FUNCTION_EXPORT(play_test, sound test);
 
-void play(char *txt)
+int syn6288_play(char *txt)
 {
     char tempbuff[205];
     uint8_t datalength;
     int i = 0;
     int j = 0;
     uint8_t xorcrc=0;
-    rt_device_t dev;
-    uint8_t tmp;
+    uint8_t temp;
     RT_ASSERT(txt != NULL);
     
     i = 5;
@@ -100,7 +108,14 @@ void play(char *txt)
         tempbuff[i++] = *txt++;
 
     }
+    
     datalength = i - 5;
+
+    if(datalength > SYN6288_MAX_LENGTH){
+        
+        return -1;
+        
+    }
     
     tempbuff[0] = 0xFD;
 
@@ -116,168 +131,154 @@ void play(char *txt)
         xorcrc=xorcrc ^ tempbuff[j];      
     }
     tempbuff[datalength + 5] = xorcrc;
-/*
-    for(i = 0;i < (datalength + 6);i++){
 
-        rt_kprintf("%X\n",tempbuff[i]);
-
-    }
-    */
-    dev = rt_device_find(SYN6288_DEVICE_NAME);
-    rt_device_open(dev,RT_DEVICE_OFLAG_RDWR | RT_DEVICE_FLAG_STREAM);
-    tmp = rt_device_write(dev,0,tempbuff,datalength + 6);
+    temp = rt_device_write(syn6288_dev,0,tempbuff,datalength + 6);
     
+    if(temp != (datalength + 6))
+        rt_kprintf("data of audio miss!!\n");
+
+    return 0;
+}
+
+
+FINSH_FUNCTION_EXPORT(syn6288_play, input:string);
+
+
+void syn6288_stop(void)
+{
+    uint8_t stop_char[] = {0xfd,0x00,0x02,0x02,0xfd};
+    
+    uint8_t temp;
+    
+    temp = rt_device_write(syn6288_dev,0,stop_char,sizeof(stop_char));
+
+    if(temp != sizeof(stop_char))
+        rt_kprintf("data of audio miss!!\n");
+
+
+}
+FINSH_FUNCTION_EXPORT(syn6288_stop, func:stop play audio);
+
+
+void syn6288_pause(void)
+{
+    uint8_t pause_char[] = {0xfd,0x00,0x02,0x03,0xfc};
+    
+    uint8_t temp;
+    
+    temp = rt_device_write(syn6288_dev,0,pause_char,sizeof(pause_char));
+
+    if(temp != sizeof(pause_char))
+        rt_kprintf("data of audio miss!!\n");
+
+
+}
+FINSH_FUNCTION_EXPORT(syn6288_pause, func:pause play audio);
+
+void syn6288_continue(void)
+{
+    uint8_t continue_char[] = {0xfd,0x00,0x02,0x04,0xfb};
+    
+    uint8_t temp;
+    
+    temp = rt_device_write(syn6288_dev,0,continue_char,sizeof(continue_char));
+
+    if(temp != sizeof(continue_char))
+        rt_kprintf("data of audio miss!!\n");
+
+}
+FINSH_FUNCTION_EXPORT(syn6288_continue, func:continue play audio);
+
+
+/*****************************************************************************
+ @funcname: syn6288_volume
+ @brief   : control syn6288 volume
+ @param   : uint8_t vol  0~16  0:Mute 16:Max
+ @return  : 
+*****************************************************************************/
+void syn6288_volume(uint8_t vol)
+{
+    char vol_char[] = "[v1]";//{'[',vol,']'};
+
+    vol_char[2] = vol + 0x30;
+
+    syn6288_play(vol_char);
+
+}
+FINSH_FUNCTION_EXPORT(syn6288_volume, func:control volume of audio);
+
+uint8_t syn6288_state(void)
+{
+    char state_char[] = {0xfd,0x00,0x02,0x21,0xde};
+
+    uint8_t temp;
+    uint8_t state;
+    
+    temp = rt_device_write(syn6288_dev,0,continue_char,sizeof(continue_char));
+
+    if(temp != sizeof(continue_char))
+        rt_kprintf("data of audio miss!!\n");
+
+    if(1 == rt_device_read(syn6288_dev,0,&state,1)){
+        return state;
+    }
+    else{
+        return 0;
+    }
+        
+}
+
+
+void play_test(void)
+{
+
+    uint8_t test[] = {0xFD,0x00,0x0B,0x01,0x00,0xD3,0xEE,0xD2,0xF4,0xCC,0xEC,0xCF,0xC2,0xC1};
+    
+    uint8_t tmp;
+    tmp = rt_device_write(syn6288_dev,0,test,sizeof(test));
+
+    if(tmp == sizeof(test))
+        rt_kprintf("play success!!\n");
+
     rt_kprintf("return %d\n",tmp);
 }
 
+FINSH_FUNCTION_EXPORT(play_test, sound test);
 
-FINSH_FUNCTION_EXPORT(play, input:string);
 
-void rt_audio_thread_entry(void * parameter)
+void syn6288_set(uint8_t fg_vol,uint8_t bg_vol,uint8_t speed)
 {
+    char vol_char[] = "[d][v8][m2][t5]";//[d] global default;[v8] foreground vol is 8;
 
-	rt_device_t dev ;
+    vol_char[5] = fg_vol + 0x30;
+
+    vol_char[9] = bg_vol + 0x30;
     
-	dev = rt_device_find(SYN6288_DEVICE_NAME);
-	rt_device_open(dev, RT_DEVICE_OFLAG_RDWR);
-	
-	while(1){
-        //if(rt_device_read(dev, 0, &tmp, 1) == 1)
-            //rt_kprintf("%d\n",tmp);
-       }  
+    vol_char[13] = speed + 0x30;
 
+    syn6288_play(vol_char);
 
 }
 
 
-void audio_init(void)
-{
 
-  //  rt_thread_t tid;
-    
+uint8_t syn6288_hw_init(void)
+{
+    /* load voc param from flash */
+	voc_config_t *p_voc_param = NULL;		
+    p_voc_param = &p_cms_param->voc;
+
     audio_io_init();
-
-    /*
-    tid = rt_thread_create("audio",
-        rt_audio_thread_entry, RT_NULL,
-        2048, RT_THREAD_PRIORITY_MAX-2, 20);
-
-    if (tid != RT_NULL)
-        rt_thread_startup(tid);
-*/
-
-}
-
-
-void sdram_test(void)
-
-{
-    #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
-    #define IS42S16400J_SIZE             0x400000
-
-    uint8_t ubWritedata_8b = 0x3C, ubReaddata_8b = 0;  
-    uint16_t uhWritedata_16b = 0x5678, uhReaddata_16b = 0;  
-    uint32_t uwReadwritestatus = 0;
-    uint32_t counter = 0x0;
-
-#if 0
-    /* Erase SDRAM memory */
-    for (counter = 0x00; counter < IS42S16400J_SIZE; counter++)
-    {
-      *(__IO uint8_t*) (SDRAM_BANK_ADDR + counter) = (uint8_t)0x0;
-    }
-
-    /* Write data value to all SDRAM memory */
-    for (counter = 0; counter < IS42S16400J_SIZE; counter++)
-    {
-      *(__IO uint8_t*) (SDRAM_BANK_ADDR + counter) = (uint8_t)(ubWritedata_8b + counter);
-    }
-
-    /* Read back SDRAM memory and check content correctness*/
-    counter = 0;
-    uwReadwritestatus = 0;
-    while ((counter < IS42S16400J_SIZE) && (uwReadwritestatus == 0))
-    {
-      ubReaddata_8b = *(__IO uint8_t*)(SDRAM_BANK_ADDR + counter);
-      if ( ubReaddata_8b != (uint8_t)(ubWritedata_8b + counter))
-      {
-        uwReadwritestatus = 1;
-             
-      }
-      else
-      {
-
-      }
-      counter++;
-    } 
-
-    if(uwReadwritestatus == 0)
-    {
-      rt_kprintf("  8-bits AHB      \n");
-      rt_kprintf("  Transaction     \n"); 
-      rt_kprintf("  Test-> OK       \n");   
-    }
-    else
-    {
-      rt_kprintf("    8-bits AHB     \n");
-      rt_kprintf("   Transaction     \n"); 
-      rt_kprintf("   Test-> NOT OK   \n");     
-    }
-#endif
-    /*********************** 16-bits AHB transaction test ***********************/    
     
-
-    /* Erase SDRAM memory */
-    for (counter = 0x00; counter < IS42S16400J_SIZE; counter++)
-    {
-      *(__IO uint16_t*) (SDRAM_BANK_ADDR + 2*counter) = (uint16_t)0x00;
-    }
-
-    /* Write data value to all SDRAM memory */
-    for (counter = 0; counter < IS42S16400J_SIZE; counter++)
-    {
-      *(__IO uint16_t*) (SDRAM_BANK_ADDR + 2*counter) = (uint16_t)(uhWritedata_16b++);
-    }
-
-    /* Read back SDRAM memory and check content correctness*/
-    counter = 0;
-    uwReadwritestatus = 0;
-    while ((counter < IS42S16400J_SIZE) && (uwReadwritestatus == 0))
-    {
-      uhReaddata_16b = *(__IO uint16_t*)(SDRAM_BANK_ADDR + 2*counter);
-      //if(counter%100 == 0){
-      rt_kprintf("data:%X  %X\n",uhReaddata_16b,(uint16_t)(uhWritedata_16b+1 + counter));
-
-      //}
-      
-      if ( uhReaddata_16b != (uint16_t)(uhWritedata_16b+1 + counter))
-      {
-        uwReadwritestatus = 1;
-
-      }
-      else
-      {
-
-      }
-      counter++;
-    }
-    rt_kprintf("counter is %d\n",counter);
-    if(uwReadwritestatus == 0)
-    {
-      rt_kprintf("  16-bits AHB     \n");
-      rt_kprintf("  Transaction     \n"); 
-      rt_kprintf("  Test-> OK       \n");   
-    }
-    else
-    {
-      rt_kprintf("    16-bits AHB    \n");
-      rt_kprintf("   Transaction     \n"); 
-      rt_kprintf("   Test-> NOT OK   \n");     
-    }
-
-
-
+    syn6288_dev = rt_device_find(SYN6288_DEVICE_NAME);
+    
+    rt_device_open(syn6288_dev,RT_DEVICE_OFLAG_RDWR);
+    
+    syn6288_set(p_voc_param->fg_volume,p_voc_param->bg_volume,p_voc_param->speed);
+        
+    audio_enble();
+    
+    return 0;
 
 }
-FINSH_FUNCTION_EXPORT(sdram_test, test);
 

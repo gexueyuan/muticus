@@ -88,7 +88,10 @@ void load_default_param_custom(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
-    
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
 
 }
 
@@ -136,6 +139,10 @@ void load_default_param_highway(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -184,6 +191,10 @@ void load_default_param_mountain(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -231,6 +242,10 @@ void load_default_param_city(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -283,6 +298,10 @@ void load_default_param(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -532,6 +551,12 @@ void param_get(void)
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------wnet---------------------\n");
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"wnet.channel(29)=%d\n",p_cms_param->wnet.channel);
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"wnet.txrate(30)=%d\n",p_cms_param->wnet.txrate);
+
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------voc----------------------\n");
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"voc.fg_volume(32)=%d\n",p_cms_param->voc.fg_volume);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"voc.bg_volume(33)=%d\n",p_cms_param->voc.bg_volume);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"voc.speed(34)=%d\n",p_cms_param->voc.speed);
+
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"...\n");
 
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------end---------------------\n");
@@ -748,9 +773,21 @@ int param_set(uint8_t param, int32_t value)
     case 30:
         cfg_param->wnet.txrate = value;
         break;
+        
     case 31:
         cfg_param->print_xxx = value;
         break;
+        
+    case 32:
+        cfg_param->voc.fg_volume = value;
+        break;
+    case 33:
+        cfg_param->voc.bg_volume = value;
+        break;
+    case 34:
+        cfg_param->voc.speed = value;
+        break;
+        
     default:          
         rt_kprintf("invalid  parameter  number!!\n");
         break;
@@ -874,7 +911,11 @@ uint8_t flash_read(uint8_t mode)
     rt_kprintf("wnet.channel(29)=%d\n",param_temp->wnet.channel);
     rt_kprintf("wnet.txrate(30)=%d\n",param_temp->wnet.txrate);
 
-
+    rt_kprintf("----------------------voc---------------------\n");    
+    rt_kprintf("voc.fg_volume(32)=%d\n",param_temp->voc.fg_volume);
+    rt_kprintf("voc.bg_volume(33)=%d\n",param_temp->voc.bg_volume);
+    rt_kprintf("voc.speed(34)=%d\n",param_temp->voc.speed);
+    
     rt_kprintf("...\n");
 
     rt_kprintf("----------------------end---------------------\n");    
