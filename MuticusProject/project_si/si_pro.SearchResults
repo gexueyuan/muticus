@@ -1,0 +1,2 @@
+---- TOUCH_XU Matches (1 in 1 files) ----
+bsp_tsc_STMPE811.h (d:\vanet\prototype(cms)\develop\firmware\base\muticus\muticusproject\bsp):#define TOUCH_XU                   IO_Pin_4 
