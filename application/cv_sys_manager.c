@@ -51,7 +51,7 @@ void null_space(void)
  * declaration of variables and functions                                    *
 *****************************************************************************/
 
-
+void sound_alert_process(void* parameter);
 extern void led_on(Led_TypeDef led);
 extern void led_off(Led_TypeDef led);
 extern void led_blink(Led_TypeDef led);
@@ -481,10 +481,10 @@ void sys_init(void)
     osal_assert(p_sys->queue_sys_mng != NULL);
 
 
-    //p_sys->timer_voc = osal_timer_create("tm-voc",sound_alert_process, p_sys,\
-       // MS_TO_TICK(500),TRUE);                     
-    //osal_assert( p_sys->timer_voc != NULL);
-    //osal_timer_start(p_sys->timer_voc);
+    p_sys->timer_voc = osal_timer_create("tm-voc",sound_alert_process, p_sys,\
+        MS_TO_TICK(500),TRUE);                     
+    osal_assert( p_sys->timer_voc != NULL);
+    osal_timer_start(p_sys->timer_voc);
 
     p_sys->task_sys_hi = osal_task_create("t-hi",
                            rt_hi_thread_entry, p_sys,

@@ -9,17 +9,19 @@
            2015-8-6    gexueyuan    Created file
            ...
 ******************************************************************************/
+#include "cv_osal.h"
+
 #include <rthw.h>
 #include <rtthread.h>
     
 #include "stm32f4xx.h"
 #include "board.h"
 #include "usart.h"
-//#include "gpio.h"
 #include <rtthread.h>
 #include "finsh.h"
 #include "components.h"
-
+#include "voc.h"
+#include "cv_cms_def.h"
 
 #define SYN6288_DEVICE_NAME	"uart4"
 
@@ -207,6 +209,36 @@ void syn6288_volume(uint8_t vol)
 }
 FINSH_FUNCTION_EXPORT(syn6288_volume, func:control volume of audio);
 
+/*****************************************************************************
+ @funcname: syn6288_speed
+ @brief   : syn6288 play speed
+ @param   : uint8_t speed  :0~5  5 is the fastest speed
+ @return  : 
+*****************************************************************************/
+void syn6288_speed(uint8_t speed)
+{
+    char speed_char[] = "[t0]";//{'[',vol,']'};
+
+    speed_char[2] = speed + 0x30;
+
+    syn6288_play(speed_char);
+
+}
+FINSH_FUNCTION_EXPORT(syn6288_speed, func:control speed of audio);
+
+
+
+void syn6288_mode(uint8_t mode)
+{
+    char mode_char[] = "[o0]";
+
+    mode_char[2] = mode + 0x30;
+
+    syn6288_play(mode_char);
+
+}
+FINSH_FUNCTION_EXPORT(syn6288_mode, var:0-nature 1-word by word);
+
 uint8_t syn6288_state(void)
 {
     char state_char[] = {0xfd,0x00,0x02,0x21,0xde};
@@ -214,9 +246,9 @@ uint8_t syn6288_state(void)
     uint8_t temp;
     uint8_t state;
     
-    temp = rt_device_write(syn6288_dev,0,continue_char,sizeof(continue_char));
+    temp = rt_device_write(syn6288_dev,0,state_char,sizeof(state_char));
 
-    if(temp != sizeof(continue_char))
+    if(temp != sizeof(state_char))
         rt_kprintf("data of audio miss!!\n");
 
     if(1 == rt_device_read(syn6288_dev,0,&state,1)){
@@ -248,7 +280,7 @@ FINSH_FUNCTION_EXPORT(play_test, sound test);
 
 void syn6288_set(uint8_t fg_vol,uint8_t bg_vol,uint8_t speed)
 {
-    char vol_char[] = "[d][v8][m2][t5]";//[d] global default;[v8] foreground vol is 8;
+    char vol_char[] = "[d][v8][m2][t5][o0]";//[d] global default;[v8] foreground vol is 8;
 
     vol_char[5] = fg_vol + 0x30;
 

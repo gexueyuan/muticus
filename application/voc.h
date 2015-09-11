@@ -48,8 +48,8 @@ typedef struct _voc_session {
 #define VOC_STATUS_TST(s) (voc_status&(s))
 
 
-int voc_play(uint32_t encode_type, uint8_t *data, uint32_t length, voc_handler complete);
-void voc_stop(uint32_t b_wait);
+//int voc_play(uint32_t encode_type, uint8_t *data, uint32_t length, voc_handler complete);
+//void voc_stop(uint32_t b_wait);
 
 
 #endif //__VOC_H__

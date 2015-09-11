@@ -28,6 +28,10 @@ static uint32_t voice_rd_idx;
 static uint32_t phase = 0;
 
 #define NOTICE_STRING  "soundb"
+#define CFCW_VOC "[3]请注意前方[2]车辆" //"北京[3]东直门站到了"//
+#define CRCW_VOC "后方超车"
+#define EEBL_VOC "前方急刹"
+#define VBD_VOC "[2]前方[2]车辆[2]故障"  
 
 
 void voc_stop(void)
@@ -37,10 +41,15 @@ void voc_stop(void)
 
 static void sound_play_complete(void)
 {
-
+    sys_envar_t *p_sys = &p_cms_envar->sys;
+    if (phase != 0) {
+        /* Alert has been stopped. */
+        osal_timer_change(p_sys->timer_voc, SOUND_PLAY_INTERVAL);
+        osal_timer_start(p_sys->timer_voc);
+    }
 }
 
-static void notice_di_play_once(void)
+static void notice_di_play_once(void *complete)
 {
     syn6288_play(NOTICE_STRING);
 }
@@ -51,30 +60,21 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     uint32_t length;
 
     switch (alert_type) {
-        
-    case 0:
-        data = (uint8_t *)test_8K_16bits;
-        length = test_8K_16bitsLen;
-        break;
-        
+               
     case HI_OUT_CRD_ALERT:
-        data = (uint8_t *)CFCW_8K_16bits;
-        length = CFCW_8K_16bitsLen;
+        data = CFCW_VOC;
         break;
 
     case HI_OUT_CRD_REAR_ALERT:
-        data = (uint8_t *)CRCW_8K_16bits;
-        length = CRCW_8K_16bitsLen;
+        data = CRCW_VOC;
         break;
 
     case HI_OUT_VBD_ALERT:
-        data = (uint8_t *)VBD_8K_16bits;
-        length = VBD_8K_16bitsLen;
+        data = VBD_VOC;
         break;
 
     case HI_OUT_EBD_ALERT:
-        data = (uint8_t *)EEBL_8K_16bits;
-        length = EEBL_8K_16bitsLen;
+        data = EEBL_VOC;
         break;
     
     default:
@@ -82,12 +82,13 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         break;
     }
 
-    voc_play(VOC_ENCODE_ADPCM, data, length, (voc_handler)complete);
+   //voc_play(VOC_ENCODE_ADPCM, data, length, (voc_handler)complete);
+   syn6288_play(data);
 }
 
 void sound_notice_di(void)
 {
-    notice_di_play_once(void);
+    notice_di_play_once(sound_play_complete);
 }
 
 void sound_alert_start(uint32_t alert_type)
@@ -108,7 +109,8 @@ void sound_alert_start(uint32_t alert_type)
 }
 void alert_start(uint32_t alert_type)
 {
-    sound_alert_start(alert_type);
+    //sound_alert_start(alert_type);
+    voice_play_once(alert_type,NULL);
 }
 FINSH_FUNCTION_EXPORT(alert_start, alert_start);
 
@@ -118,12 +120,12 @@ void sound_alert_stop()
     phase = 0;
     osal_leave_critical();
 
-    voc_stop(FALSE);
+    voc_stop();
     memset(voice, 0, sizeof(voice));
     voice_wr_idx = 0;
     voice_rd_idx = 0;
 }
-void alert_stop()
+void alert_stop(void)
 {
     sound_alert_stop();
 }
