@@ -33,6 +33,12 @@
 #define SYN_PIN   GPIO_Pin_2
 #define SYN_PORT  GPIOE
 
+#define SYN_RB_CLK  RCC_AHB1Periph_GPIOF
+#define SYN_RB_PIN  GPIO_Pin_6
+#define SYN_RB_PORT  GPIOF
+
+#define SYN_STATE()  GPIO_ReadInputDataBit(SYN_RB_PORT,SYN_RB_PIN)/*0-ready,1-busy*/
+
 typedef enum _BAUDRATE_SYN6288 {
     BAUDRATE_SYN6288_9600 = 0,
     BAUDRATE_SYN6288_19200,
@@ -59,7 +65,7 @@ void audio_io_init(void)
     GPIO_InitTypeDef GPIO_InitStructure = { 0 };
     
     
-    RCC_AHB1PeriphClockCmd(SYN_CLK, ENABLE);
+    RCC_AHB1PeriphClockCmd(SYN_CLK | SYN_RB_CLK, ENABLE);
 
     /* Sound en enable*/
     GPIO_InitStructure.GPIO_Pin =  SYN_PIN;
@@ -69,6 +75,15 @@ void audio_io_init(void)
     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_DOWN;
     
     GPIO_Init(SYN_PORT, &GPIO_InitStructure);
+
+    /*SYN6288 BUSY/READY*/
+    GPIO_InitStructure.GPIO_Pin =  SYN_RB_PIN;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
+
+    GPIO_Init(SYN_RB_PORT, &GPIO_InitStructure);
     
     audio_disable();//after init ,disable audio output
 }
@@ -241,25 +256,30 @@ FINSH_FUNCTION_EXPORT(syn6288_mode, var:0-nature 1-word by word);
 
 uint8_t syn6288_state(void)
 {
+  return SYN_STATE();
+
+/*
     char state_char[] = {0xfd,0x00,0x02,0x21,0xde};
 
     uint8_t temp;
-    uint8_t state;
+    uint8_t state[2];
     
     temp = rt_device_write(syn6288_dev,0,state_char,sizeof(state_char));
 
     if(temp != sizeof(state_char))
         rt_kprintf("data of audio miss!!\n");
 
-    if(1 == rt_device_read(syn6288_dev,0,&state,1)){
-        return state;
+    rt_device_read(syn6288_dev,0,&state,2);
+    rt_kprintf("state of syn6288 is %X,%X\n",state[0],state[1]);
+    if(2 == rt_device_read(syn6288_dev,0,&state,2)){
+        rt_kprintf("state of syn6288 is %X,%X\n",state[0],state[1]);
+        //return state;
     }
     else{
-        return 0;
+        //return 0;
     }
-        
+   */     
 }
-
 
 void play_test(void)
 {

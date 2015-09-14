@@ -521,6 +521,11 @@
               <FileType>1</FileType>
               <FilePath>..\application\app_interface.c</FilePath>
             </File>
+            <File>
+              <FileName>cv_sys_sound_play.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\cv_sys_sound_play.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

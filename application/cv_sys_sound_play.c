@@ -82,8 +82,8 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         break;
     }
 
-   //voc_play(VOC_ENCODE_ADPCM, data, length, (voc_handler)complete);
-   syn6288_play(data);
+   voc_play(VOC_ENCODE_ADPCM, data, length, (voc_handler)complete);
+   //syn6288_play(data);
 }
 
 void sound_notice_di(void)

@@ -297,9 +297,6 @@ void rt_play_thread_entry(void *parameter)
             memcpy(session, p_msg, sizeof(voc_session_t));
             osal_free(p_msg);
 
-            /* The pins of i2s module conflict with lcd control. */
-            //Pt8211_AUDIO_Init(session->sample_rate);
-
             switch (session->encode_type) {
             case VOC_ENCODE_ADPCM:
                 adpcm_play(session->src_data, session->src_length);
@@ -337,23 +334,8 @@ void voc_init(void)
 
     voc_status = 0;
 
-	sem_adpcm_data = osal_sem_create("sem-addata",0);
+	sem_adpcm_data = osal_sem_create("sem-play",0);
 	osal_assert(sem_adpcm_data != NULL);
-
-	sem_buffer_voc = osal_sem_create("sem-bufvoc",BUFFER_COUNT);
-	osal_assert(sem_buffer_voc != NULL);
-
-	sem_audio_dev = osal_sem_create("sem-audev",1);
-	osal_assert(sem_audio_dev != NULL);
-
-	sem_adpcm_start = osal_sem_create("sem-adst",0);
-	osal_assert(sem_adpcm_start != NULL);
-
-	sem_play_complete = osal_sem_create("sem-plcom", 0);
-	osal_assert(sem_play_complete != NULL);
-
-    queue_play = osal_queue_create("q-play",  VOC_QUEUE_SIZE);
-    osal_assert(queue_play != NULL);
 
 
     thread = osal_task_create("t-play",
@@ -361,10 +343,6 @@ void voc_init(void)
                            RT_VSA_THREAD_STACK_SIZE, RT_PLAY_THREAD_PRIORITY);
     osal_assert(thread != NULL);
 
-    thread = osal_task_create("t-adpcm",
-                           rt_adpcm_thread_entry, NULL,
-                           RT_VSA_THREAD_STACK_SIZE, RT_ADPCM_THREAD_PRIORITY);
-    osal_assert(thread != NULL);
     
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "module initial\n\n");         
 }

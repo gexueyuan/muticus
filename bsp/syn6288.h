@@ -27,5 +27,6 @@ void syn6288_continue(void);
 
 void syn6288_set(uint8_t fg_vol,uint8_t bg_vol,uint8_t speed);
 
+uint8_t syn6288_state(void);
 
 

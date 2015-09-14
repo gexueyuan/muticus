@@ -252,6 +252,8 @@ void UART4_IRQHandler(void)
     rt_interrupt_enter();
     if (USART_GetITStatus(uart->uart_device, USART_IT_RXNE) != RESET)
     {
+        
+        rt_kprintf("play return is %X\n",uart->uart_device->DR);
 		rt_hw_serial_isr(&serial4);
 		/* clear interrupt */
 		USART_ClearITPendingBit(uart->uart_device, USART_IT_RXNE);
