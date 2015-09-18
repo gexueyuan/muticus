@@ -34,7 +34,7 @@
 int32_t vam_start(void)
 {
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "%s: --->\n", __FUNCTION__);
-    vam_add_event_queue(&p_cms_envar->vam, VAM_MSG_START, 0, 0, 0);
+    vam_add_event_queue(&cms_envar.vam, VAM_MSG_START, 0, 0, 0);
     return 0;
 }
 FINSH_FUNCTION_EXPORT(vam_start, vam module start);
@@ -42,7 +42,7 @@ FINSH_FUNCTION_EXPORT(vam_start, vam module start);
 int32_t vam_stop(void)
 {
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "%s: --->\n", __FUNCTION__);
-    vam_add_event_queue(&p_cms_envar->vam, VAM_MSG_STOP, 0, 0, 0);
+    vam_add_event_queue(&cms_envar.vam, VAM_MSG_STOP, 0, 0, 0);
     return 0;
 }
 FINSH_FUNCTION_EXPORT(vam_stop, vam module stop);

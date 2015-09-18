@@ -160,14 +160,15 @@ typedef struct _vsa_envar{
 	/*List head*/	
     list_head_t crd_list;
     list_head_t position_list;
-    //list_head_t ebd_list;
-    //list_head_t vbd_list;
     vsa_position_node_t position_node[VAM_NEIGHBOUR_MAXNUM];
     
 
-    /* os related */
+    /* Vsa local process task. */
     osal_task_t  *task_vsa_l;
+
+    /* Vsa remote process task. */
     osal_task_t  *task_vsa_r;
+
 
     osal_sem_t   *sem_vsa_proc;
     

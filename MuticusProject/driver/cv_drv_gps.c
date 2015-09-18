@@ -65,7 +65,7 @@ static void gps_read_data(rt_device_t dev)
                 __GPSBuff.PpBuf[__GPSBuff.Pipe].Flag = 0;
 
                         {   
-                            if(p_cms_envar->vam.queue_vam ){
+                            if(cms_envar.vam.queue_vam ){
                             
                                 sys_msg_t *p_msg;
                                 p_msg = osal_malloc(sizeof(sys_msg_t));
@@ -73,7 +73,7 @@ static void gps_read_data(rt_device_t dev)
                                     p_msg->id = VAM_MSG_GPSDATA;
                                     p_msg->len = __GPSBuff.PpBuf[__GPSBuff.Pipe].Len;
                                     p_msg->argv = &__GPSBuff.PpBuf[__GPSBuff.Pipe].Buf;
-                                    if (OSAL_STATUS_SUCCESS != vam_add_event_queue_2(&p_cms_envar->vam, p_msg)){
+                                    if (OSAL_STATUS_SUCCESS != vam_add_event_queue_2(&cms_envar.vam, p_msg)){
                                         osal_free(p_msg);
                                     }
                                 }

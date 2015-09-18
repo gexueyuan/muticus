@@ -72,7 +72,7 @@ static void printAcc(gsnr_log_level_t level, char *des, float x, float y, float 
 void GsensorReadAcc(float* pfData)
 {
     gsnr_get_acc(pfData);
-    printAcc(GSNR_DEBUG, "raw_xyz", pfData[0], pfData[1], pfData[2]);    
+    printAcc(GSNR_NOTICE, "raw_xyz", pfData[0], pfData[1], pfData[2]);    
 
     g_info.x = pfData[0];
     g_info.y = pfData[1];
@@ -330,7 +330,7 @@ int32_t RecDirection(GSENSOR_INFO gsensor_dat)
 void AcceDetect(float acce_ahead, float acce_k, float acce_k_x)
 {
 	static int32_t cnt = 0 ;
-	sys_envar_t *p_sys = &p_cms_envar->sys;
+	sys_envar_t *p_sys = &cms_envar.sys;
 	static uint8_t key_press = 0;
 
 	if(acce_k > SHARP_RIGHT_THRESOLD)	
@@ -501,7 +501,7 @@ void gsnr_init()
     osal_task_t *gsnr_thread;
     /* load gsnr param from flash */
 	gsnr_config_t *p_gsnr_param = NULL;		
-    p_gsnr_param = &p_cms_param->gsnr;
+    p_gsnr_param = &cms_param.gsnr;
 
     gsnr_drv_init();
         

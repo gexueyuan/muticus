@@ -34,8 +34,19 @@ uint32_t drv_main_open(void)
     }
     
 #endif
+
     
+#if DRV_ENABLE_TSC
+
+    /* Open tsc module. */
+    if((result = DRV_TSC_PTR->open(DRV_TSC_PTR)) != DRV_TSC_ERR_OK)
+    {
+        return result;
+    }
     
+#endif
+
+   
 #if DRV_ENABLE_WNET
     
     /* Open wnet module. */
@@ -46,6 +57,16 @@ uint32_t drv_main_open(void)
     
 #endif
     
+ 
+
+
+
+
+
+
+
+
+
     
     
 }

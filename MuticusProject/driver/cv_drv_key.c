@@ -217,7 +217,7 @@ static void key_thread_entry(void *parameter)
 int rt_key_init(void)
 {
     osal_task_t  *key_tid;
-    sys_envar_t *p_sys = &p_cms_envar->sys;
+    sys_envar_t *p_sys = &cms_envar.sys;
 	
     key_tid = osal_task_create("t-key",
                                key_thread_entry, p_sys,

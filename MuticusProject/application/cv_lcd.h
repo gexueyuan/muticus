@@ -205,17 +205,26 @@ typedef struct _vec_param_st
 #define VEC_PARAM_ST_LEN    (sizeof(vec_param_st))
 
 /* Macro for "road mode". */
-#define VEC_ROADMODE_HIGHWAY    0x00
-#define VEC_ROADMODE_MOUNTAIN   0x01
-#define VEC_ROADMODE_CITY       0x02
+#define VEC_ROADMODE_HIGHWAY          0x00
+#define VEC_ROADMODE_MOUNTAIN         0x01
+#define VEC_ROADMODE_CITY             0x02
+
+#define VEC_ROADMODE_INDEX_MIN        0x00
+#define VEC_ROADMODE_INDEX_MAX        0x02
 
 /* Macro for "vec_mode". */
-#define VEC_VECMODE_CAR         0x00
-#define VEC_VECMODE_AMBULANCE   0x01
+#define VEC_VECMODE_CAR               0x00
+#define VEC_VECMODE_AMBULANCE         0x01
+ 
+#define VEC_VECMODE_INDEX_MIN         0x00
+#define VEC_VECMODE_INDEX_MAX         0x01
 
 /* Macro for "breakdown_mode". */
-#define VEC_BREAKDOWNMODE_NO    0x00
-#define VEC_BREAKDOWNMODE_YES   0x01
+#define VEC_BREAKDOWNMODE_NO          0x00
+#define VEC_BREAKDOWNMODE_YES         0x01
+
+#define VEC_BREAKDOWNMODE_INDEX_MIN   0x00
+#define VEC_BREAKDOWNMODE_INDEX_MAX   0x01
 
 
 /* System parameter structure.--------------------------------------------*/

@@ -18,7 +18,7 @@
 #include "gsensor.h"
 #include "cv_mda.h"
 #include "led.h"
-
+#include "voc.h"
 
 /*****************************************************************************
  * declaration of variables and functions                                    *
@@ -179,30 +179,22 @@ typedef struct _sys_msg
     void      *argv;
 }sys_msg_t;
 
-/**
-    structure of system configure parameters 
-*/
+/** structure of system configure parameters. */
 typedef struct _cfg_param{
 
-	/*********************ID******************/	
-    uint8_t pid[RCP_TEMP_ID_LEN];  // ID 
+    uint8_t pid[RCP_TEMP_ID_LEN];
 
-    /******************** VAM *********************/
     vam_config_t vam;
-
-    /******************** VSA *********************/
     vsa_config_t vsa;
-    
-	  /**************************************************/
     gsnr_config_t gsnr;
-
-	  /*********************WNET*************************/
     wnet_config_t wnet;
-	
-    /******************** DBG *********************/
-    uint8_t print_xxx;  /* 0 - disable, 1 - enable */
 
-                 
+    uint8_t print_xxx;  /* 0 - disable, 1 - enable */
+    
+    /******************** AUDIO*********************/
+    voc_config_t voc;
+    
+    /******************** CALIBRATION *********************/
 }cfg_param_t;
 
 /** 
@@ -315,8 +307,8 @@ static __inline float cv_ntohf(float f32)
 /*****************************************************************************
  * declare of global functions and variables                                 *
 *****************************************************************************/
-extern cms_global_t cms_envar, *p_cms_envar;
-extern cfg_param_t cms_param, *p_cms_param;
+extern cms_global_t cms_envar;
+extern cfg_param_t cms_param;
 
 osal_status_t sys_add_event_queue(sys_envar_t *p_sys, 
                              uint16_t msg_id, 

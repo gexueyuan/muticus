@@ -276,7 +276,7 @@ static void mda_thread_entry(void *parameter)
  */
 void mda_init(void)
 {
-    mda_envar_t *p_mda = &p_cms_envar->mda;
+    mda_envar_t *p_mda = &cms_envar.mda;
 
     memset(p_mda, 0, sizeof(mda_envar_t));
 

@@ -213,11 +213,11 @@
 /* Error codes. */ 
 typedef enum
 {
-  TSC_OK = 0,
-  TSC_FAILURE, 
-  TSC_TIMEOUT,
-  PARAM_ERROR,
-  TSC_NOT_OPERATIONAL, 
+    TSC_OK = 0,
+    TSC_FAILURE, 
+    TSC_TIMEOUT,
+    TSC_PARAM_ERROR,
+    TSC_NOT_OPERATIONAL, 
   
 }TSC_Status_TypDef;
 
@@ -225,8 +225,8 @@ typedef enum
 /* TSC DMA Direction. */ 
 typedef enum
 {
-  TSC_DMA_TX = 0,
-  TSC_DMA_RX = 1
+    TSC_DMA_TX = 0,
+    TSC_DMA_RX = 1
   
 }TSC_DMADirection_TypeDef;
 
@@ -263,14 +263,7 @@ extern TSC_Status_TypDef TSC_init(void);
 
 /* Touch Panel controller functions. */
 extern TSC_Status_TypDef TSC_get_touch_state(tsc_state_st_ptr state_ptr);
-extern TSC_Status_TypDef TSC_get_device_status(void);
-
-
-
-#define    MinX    160
-#define    MaxX    3925
-#define    MinY    130  
-#define    MaxY    3750
+extern TSC_Status_TypDef TSC_get_device_state(void);
 
 
 

@@ -74,7 +74,6 @@ static void TSC_delay(__IO uint32_t nCount)
   */
 static TSC_Status_TypDef TSC_I2C_WriteDeviceRegister_1B(uint8_t RegisterAddr, uint8_t RegisterValue)
 {
-    uint8_t  reg_value = 0;
     uint32_t  time_out = TIMEOUT_MAX;
 
 
@@ -135,11 +134,11 @@ static TSC_Status_TypDef TSC_I2C_WriteDeviceRegister_1B(uint8_t RegisterAddr, ui
     I2C_GenerateSTOP(TSC_I2C, ENABLE);
 
 
-    /* Verify that the loaded data is correct. */
-    TSC_I2C_ReadDeviceRegister_1B(RegisterAddr, &reg_value);
-
-    return (reg_value != RegisterValue) ? TSC_FAILURE : TSC_OK;
+    /* Caution:
+          Do not check whether the data is correct.Because the data writed may be do not match 
+       the data readed. */
     
+    return TSC_OK;
 TIMEOUT_FLAG:
 
     return TSC_TIMEOUT;  
@@ -1203,7 +1202,7 @@ TSC_Status_TypDef TSC_init(void)
     TSC_i2c_init();
 
     /* Read IO Expander ID  */
-    if(TSC_get_device_status())
+    if(TSC_get_device_state())
     {
         return TSC_NOT_OPERATIONAL;
     }
@@ -1224,7 +1223,7 @@ TSC_Status_TypDef TSC_init(void)
   * @param  None
   * @retval TSC_OK if TSC is operational. Other value if failure.
   */
-TSC_Status_TypDef TSC_get_device_status(void)
+TSC_Status_TypDef TSC_get_device_state(void)
 {
     uint16_t        reg_data = 0;
     TSC_Status_TypDef status = TSC_OK;
@@ -1234,11 +1233,11 @@ TSC_Status_TypDef TSC_get_device_status(void)
     status = TSC_I2C_ReadDeviceRegister_2B(TSC_REG_CHP_ID, &reg_data);
     if( (status == TSC_OK) && (reg_data == (uint16_t)TSC_STMPE811_ID) )
     {
-        status = TSC_FAILURE;
+        status = TSC_OK;
     }
     else
     {
-        status = TSC_OK;
+        status = TSC_FAILURE;
     }
 
     return status;
@@ -1252,16 +1251,7 @@ TSC_Status_TypDef TSC_get_device_status(void)
   */
 TSC_Status_TypDef TSC_get_touch_state(tsc_state_st_ptr state_ptr)
 {
-    uint8_t      reg_data = 0;
-    
-    uint16_t        x_cur = 0;
-    uint16_t        y_cur = 0;
-    static uint16_t x_pre = 0;
-    static uint16_t y_pre = 0;
-
-    uint16_t       x_diff = 0;
-    uint16_t       y_diff = 0;
-    
+    uint8_t         reg_data = 0; 
     TSC_Status_TypDef status = TSC_OK;
 
     
@@ -1274,34 +1264,22 @@ TSC_Status_TypDef TSC_get_touch_state(tsc_state_st_ptr state_ptr)
         if(state_ptr->Touched == TSC_TOUCHED_YES) 
         {
             /* Read x value from DATA_X register. */
-            status = TSC_I2C_ReadDeviceRegister_2B(TSC_REG_TP_DATA_X, &x_cur);
+            status = TSC_I2C_ReadDeviceRegister_2B(TSC_REG_TP_DATA_X, &(state_ptr->X));
             if(status != TSC_OK)
             {
                 goto RETURN_FLAG;
             }
 
             /* Read y value from DATA_Y register. */
-            status = TSC_I2C_ReadDeviceRegister_2B(TSC_REG_TP_DATA_Y, &y_cur);
+            status = TSC_I2C_ReadDeviceRegister_2B(TSC_REG_TP_DATA_Y, &(state_ptr->Y));
             if(status != TSC_OK)
             {
                 goto RETURN_FLAG;
             }
-            
-            /* Upgrade xy previous data based on differce. */
-            x_diff = (x_cur > x_pre)? (x_cur - x_pre):(x_pre - x_cur);
-            y_diff = (y_cur > y_pre)? (y_cur - y_pre):(y_pre - y_cur);       
-            if(4 < (x_diff + y_diff))
-            {
-                x_pre = x_cur;
-                y_pre = y_cur;       
-            }
+
+            TSC_I2C_ReadDeviceRegister_1B(TSC_REG_TP_DATA_Z, &(state_ptr->Z));
         }
         
-        /* Update the X,Y,Z position. */
-        state_ptr->X = x_pre; 
-        state_ptr->Y = y_pre;
-        TSC_I2C_ReadDeviceRegister_1B(TSC_REG_TP_DATA_Z, &(state_ptr->Z));
-
         /* Clear the interrupt pending bit and enable the FIFO again. */
         TSC_I2C_WriteDeviceRegister_1B(TSC_REG_FIFO_STA, 0x01);
         TSC_I2C_WriteDeviceRegister_1B(TSC_REG_FIFO_STA, 0x00);

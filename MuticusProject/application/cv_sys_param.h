@@ -56,6 +56,7 @@ typedef struct {
 
 #define name_to_str(name)  (#name)
 
+uint16_t  mode_get(void);
 
 const char* mode_string[]={
 

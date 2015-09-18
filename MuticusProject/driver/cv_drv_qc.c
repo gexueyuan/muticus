@@ -47,7 +47,7 @@ uint8_t led_site[3] = {LED_RED,LED_GREEN,LED_BLUE};
 qc_led_type_e  qc_led_type;
 
 
-void global_init(void);
+
 //void ate_init(void);
 void gps_set_host_baudrate(int baud);
 void sound_notice_di(void);
@@ -223,18 +223,18 @@ active_qc_way_e active_qc_check(void)
 *****************************************************************************/
 static  void  wnet_param_init(void)
 {
-    cfg_param_t  *p_cfg_param = p_cms_param;
+    cfg_param_t  *p_cfg_param = &cms_param;
     wnet_envar_t *p_wnet;
 
     /* wnet module param init */
-    p_wnet_envar = &p_cms_envar->wnet;
+    p_wnet_envar = &cms_envar.wnet;
     p_wnet = p_wnet_envar;
 
     /* set wnet test mode */
     p_cfg_param->wnet.mode = WNET_TEST_MODE;
     
     memset(p_wnet, 0, sizeof(wnet_envar_t));
-    memcpy(&p_wnet->working_param, &p_cms_param->wnet, sizeof(wnet_config_t));
+    memcpy(&p_wnet->working_param, &cms_param.wnet, sizeof(wnet_config_t));
 }
 
 /*****************************************************************************
@@ -558,11 +558,7 @@ void ate_php_init(void)
  @return  : 
 *****************************************************************************/
 void qc_run_init(void)
-{
-    qc_envar_t  *p_qc;
-
-    p_qc = p_qc_envar;
-    
+{    
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"<notice>:qc thread start...\n");
      
     /* RF test module init */

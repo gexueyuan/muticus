@@ -219,21 +219,21 @@ int vam_add_event_queue_2(vam_envar_t *p_vam, void *p_msg)
 void vam_init(void)
 {
     int i;
-    vam_envar_t *p_vam = &p_cms_envar->vam;
+    vam_envar_t *p_vam = &cms_envar.vam;
     uint8_t zero_pid[RCP_TEMP_ID_LEN] = {0};
 
     p_vam_envar = p_vam;
 
     
     memset(p_vam, 0, sizeof(vam_envar_t));
-    memcpy(&p_vam->working_param, &p_cms_param->vam, sizeof(vam_config_t));
-    if (0 == memcmp(p_cms_param->pid, zero_pid, RCP_TEMP_ID_LEN)){
+    memcpy(&p_vam->working_param, &cms_param.vam, sizeof(vam_config_t));
+    if (0 == memcmp(cms_param.pid, zero_pid, RCP_TEMP_ID_LEN)){
         for (i=0; i<RCP_TEMP_ID_LEN; i++){
             p_vam->local.pid[i] = des(RCP_TEMP_ID_LEN-1-i);
         }
     }
     else {
-        memcpy(p_vam->local.pid, p_cms_param->pid, RCP_TEMP_ID_LEN);
+        memcpy(p_vam->local.pid, cms_param.pid, RCP_TEMP_ID_LEN);
     }
 
     

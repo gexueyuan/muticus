@@ -243,7 +243,7 @@ int rcp_mda_process(uint8_t msg_hops,
     mda_envar_t * p_mda;
     int ret;
 
-    p_mda = &p_cms_envar->mda;
+    p_mda = &cms_envar.mda;
     src.left_hops = msg_hops;
     src.msg_count = msg_count;
     memcpy(src.temorary_id, p_temp_id, RCP_TEMP_ID_LEN);
@@ -482,7 +482,7 @@ int rcp_parse_msg(vam_envar_t *p_vam,
 *****************************************************************************/
 int vam_rcp_recv(wnet_rxinfo_t *rxinfo, uint8_t *databuf, uint32_t datalen)
 {
-    vam_envar_t *p_vam = &p_cms_envar->vam;
+    vam_envar_t *p_vam = &cms_envar.vam;
 
     vam_add_event_queue(p_vam, VAM_MSG_RCPRX, datalen, (uint32_t)databuf, rxinfo);
     return 0;
@@ -661,7 +661,7 @@ int rcp_send_forward_msg(wnet_txbuf_t *txbuf)
     rcp_msg_basic_safty_t *p_bsm;
     rcp_msg_emergency_vehicle_alert_t *p_evam;
 
-    vam_envar_t *p_vam = &p_cms_envar->vam;
+    vam_envar_t *p_vam = &cms_envar.vam;
     
     txinfo = WNET_TXBUF_INFO_PTR(txbuf);
     memset(txinfo, 0, sizeof(wnet_txinfo_t));
@@ -719,7 +719,7 @@ void timer_send_rsa_callback(void* parameter)
 }
 void test_rsa(int flag)
 {
-    vam_envar_t *p_vam = &p_cms_envar->vam;
+    vam_envar_t *p_vam = &cms_envar.vam;
     osal_printf("rsatype = %d , %d\r\n", RSA_TYPE_SPEED_RESTRICTION, RSA_TYPE_MAX);
     if(flag && !p_vam->timer_send_rsa){
         vam_stop();  
@@ -744,7 +744,7 @@ void timer_test_bsm_rx_callback(void* parameter)
     rcp_msg_basic_safty_t test_bsm_rx;
     rcp_msg_basic_safty_t *p_bsm;
 
-    vam_envar_t *p_vam = &p_cms_envar->vam;
+    vam_envar_t *p_vam = &cms_envar.vam;
 
     p_local = &sta;
     p_local->pos.lat = 40.0; //39.5427f;

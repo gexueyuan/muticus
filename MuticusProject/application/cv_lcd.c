@@ -28,14 +28,12 @@
 
 
 /* Vehicle parameter. */
-static sys_param_st SysParam = 
+sys_param_st SysParam = 
 {
     SYS_SYSMODE_NORMAL,                                               /* sys_mode. */
     { VEC_ROADMODE_HIGHWAY, VEC_VECMODE_CAR, VEC_BREAKDOWNMODE_NO },  /* vec_param. */
     0x00                                                              /* alarm_stat. */
 };
-
-
 
 
 
@@ -245,7 +243,7 @@ static void lcd_vec_graph_init
     int32_t         horizontal_offset = 0;
 
     uint8_t peer_pid[VAM_NEIGHBOUR_MAXNUM][RCP_TEMP_ID_LEN] = { 0 };
-    vsa_envar_t *vsa_ptr = &p_cms_envar->vsa;
+    vsa_envar_t *vsa_ptr = &cms_envar.vsa;
 
 
     /* Get active vehicle number. */
@@ -388,15 +386,28 @@ void lcd_thread_entry
     
     
     /* Inform to the system. */
-    if(p_cms_envar->sys.queue_sys_mng) 
+    if(cms_envar.sys.queue_sys_mng) 
     {
-        sys_add_event_queue(&p_cms_envar->sys, SYS_MSG_INITED, 0, 0, 0);
+        sys_add_event_queue(&cms_envar.sys, SYS_MSG_INITED, 0, 0, 0);
     }
+
+    /* Initial road mode based on system parameter. */
+    switch(get_param_num(0))
+    {
+        case 0:  {  SysParam.vec_param.road_mode = VEC_ROADMODE_CITY;      break;  }
+        case 1:  {  SysParam.vec_param.road_mode = VEC_ROADMODE_HIGHWAY;   break;  }
+        case 2:  {  SysParam.vec_param.road_mode = VEC_ROADMODE_MOUNTAIN;  break;  }
+        case 3:  {  SysParam.vec_param.road_mode = VEC_ROADMODE_CITY;      break;  }
+        default: {  SysParam.vec_param.road_mode = VEC_ROADMODE_CITY;      break;  }
+    }
+
+
+
     
     while(1)
     {     
         /* Initial lcd system parameter. */
-        lcd_sys_param_init(&SysParam, &p_cms_envar->sys);
+        lcd_sys_param_init(&SysParam, &cms_envar.sys);
 
         
         /* Initial lcd background screen. */
@@ -411,8 +422,7 @@ void lcd_thread_entry
         /* Initial vehicle information. */
         lcd_vec_infor_init(backup_layer);
         
-
-       
+  
         /* Active the backup layer and inactive primary layer. */
         lcd_layer_active(backup_layer);
         lcd_layer_inactive(primary_layer);

@@ -10,6 +10,7 @@
       <TargetName>rt-thread_stm32f4xx</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060020::V5.06 (build 20)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F429ZI</Device>
@@ -82,6 +83,8 @@
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopA1X>0</nStopA1X>
+            <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
@@ -225,6 +228,7 @@
             <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
+            <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
             <RwSelD>3</RwSelD>
             <CodeSel>0</CodeSel>
@@ -359,6 +363,10 @@
             <uSurpInc>0</uSurpInc>
             <uC99>0</uC99>
             <useXO>0</useXO>
+            <v6Lang>0</v6Lang>
+            <v6LangP>0</v6LangP>
+            <vShortEn>0</vShortEn>
+            <vShortWch>0</vShortWch>
             <VariousControls>
               <MiscControls>--c99 --diag-suppress 111</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F4XX,STM32F429_439xx,USE_STM32F429I_DISCO,USE_USB_OTG_HS ,USE_EMBEDDED_PHY,ARM_MATH_CM4, __FPU_PRESENT=1, __FPU_USED =1, __CC_ARM,ARM_MATH_MATRIX_CHECK,ARM_MATH_ROUNDING</Define>
@@ -521,6 +529,16 @@
               <FileType>1</FileType>
               <FilePath>..\application\app_interface.c</FilePath>
             </File>
+            <File>
+              <FileName>cv_sys_sound_play.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\cv_sys_sound_play.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_tsc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\app_tsc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -629,6 +647,10 @@
                     <uSurpInc>2</uSurpInc>
                     <uC99>2</uC99>
                     <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>0</vShortEn>
+                    <vShortWch>0</vShortWch>
                     <VariousControls>
                       <MiscControls></MiscControls>
                       <Define></Define>
@@ -638,6 +660,16 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>drv_tsc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\driver\drv_tsc.c</FilePath>
+            </File>
+            <File>
+              <FileName>cv_drv_voc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\driver\cv_drv_voc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -722,6 +754,10 @@
                     <uSurpInc>2</uSurpInc>
                     <uC99>2</uC99>
                     <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>0</vShortEn>
+                    <vShortWch>0</vShortWch>
                     <VariousControls>
                       <MiscControls></MiscControls>
                       <Define></Define>
@@ -1150,6 +1186,10 @@
                     <uSurpInc>2</uSurpInc>
                     <uC99>2</uC99>
                     <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>0</vShortEn>
+                    <vShortWch>0</vShortWch>
                     <VariousControls>
                       <MiscControls></MiscControls>
                       <Define></Define>

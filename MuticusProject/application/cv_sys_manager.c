@@ -51,15 +51,15 @@ void null_space(void)
  * declaration of variables and functions                                    *
 *****************************************************************************/
 
-
+void sound_alert_process(void* parameter);
 extern void led_on(Led_TypeDef led);
 extern void led_off(Led_TypeDef led);
 extern void led_blink(Led_TypeDef led);
 
 extern int param_set(uint8_t param, int32_t value);
 
-extern void play(char *txt);
-
+extern void syn6288_play(char *txt);
+extern void set_voc(void);
 /*****************************************************************************
  * implementation of functions                                               *
 *****************************************************************************/
@@ -122,7 +122,7 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 {
     uint32_t type = 0; 
     static uint8_t keycnt = 0xff;
-    vsa_envar_t *p_vsa = &p_cms_envar->vsa;
+    vsa_envar_t *p_vsa = &cms_envar.vsa;
     
     switch(p_msg->id)
     {
@@ -254,8 +254,10 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         {
             case HI_OUT_SYS_INIT:
             {
-                //sound_notice_di();              
-                //play("sounde");
+                //sound_notice_di();\
+                //syn6288_play("[1]soundb");
+                //osal_delay(50);
+                set_voc();
                 p_sys->status |= 1<<HI_OUT_GPS_LOST;
                 break;
             }
@@ -466,7 +468,7 @@ void rt_hi_thread_entry(void *parameter)
 
 void sys_init(void)
 {
-    sys_envar_t *p_sys = &p_cms_envar->sys;
+    sys_envar_t *p_sys = &cms_envar.sys;
     /* object for sys */
     p_sys->queue_sys_mng = osal_queue_create("q-sys", SYS_QUEUE_SIZE);
     osal_assert(p_sys->queue_sys_mng != NULL);
@@ -481,9 +483,9 @@ void sys_init(void)
     osal_assert(p_sys->queue_sys_mng != NULL);
 
 
-    //p_sys->timer_voc = osal_timer_create("tm-voc",sound_alert_process, p_sys,\
-       // MS_TO_TICK(500),TRUE);                     
-    //osal_assert( p_sys->timer_voc != NULL);
+    p_sys->timer_voc = osal_timer_create("tm-voc",sound_alert_process, p_sys,\
+        MS_TO_TICK(500),FALSE);                     
+    osal_assert( p_sys->timer_voc != NULL);
     //osal_timer_start(p_sys->timer_voc);
 
     p_sys->task_sys_hi = osal_task_create("t-hi",

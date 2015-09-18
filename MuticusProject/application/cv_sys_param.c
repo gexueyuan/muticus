@@ -37,7 +37,7 @@ extern  int drv_fls_write(uint32_t flash_address, uint8_t *p_databuf, uint32_t l
  * declaration of variables and functions                                    *
 *****************************************************************************/
 
-cfg_param_t cms_param, *p_cms_param;
+cfg_param_t cms_param;
 
 uint8_t param_init_words[] = "Vanet-param1";
 
@@ -88,7 +88,10 @@ void load_default_param_custom(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
-    
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
 
 }
 
@@ -136,6 +139,10 @@ void load_default_param_highway(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -184,6 +191,10 @@ void load_default_param_mountain(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -231,6 +242,10 @@ void load_default_param_city(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -283,6 +298,10 @@ void load_default_param(cfg_param_t *param)
 
     param->wnet.channel = 13;
     param->wnet.txrate = 1;
+
+    param->voc.fg_volume = 8;
+    param->voc.bg_volume = 4;
+    param->voc.speed = 4;
     
 
 }
@@ -366,15 +385,16 @@ void mode_set(uint16_t mode)
     drv_fls_read(PARAM_ADDR_MOUNTAIN,(uint8_t*)&all_param[2],sizeof(cfg_param_t));
     drv_fls_read(PARAM_ADDR_CITY,(uint8_t*)&all_param[3],sizeof(cfg_param_t));
 
-
-
     drv_fls_erase(PARAM_SECTOR);
+    
     drv_fls_write(PARAM_FLAG_ADDR,param_init_words,sizeof(param_init_words));    
     drv_fls_write(PARAM_MODE_ADDR,(uint8_t *)&param_mode,sizeof(uint16_t));
+    
     drv_fls_write(PARAM_ADDR_CUSTOM,(uint8_t*)&all_param[0],sizeof(cfg_param_t));
     drv_fls_write(PARAM_ADDR_HIGHWAY,(uint8_t*)&all_param[1],sizeof(cfg_param_t));
     drv_fls_write(PARAM_ADDR_MOUNTAIN,(uint8_t*)&all_param[2],sizeof(cfg_param_t));
     drv_fls_write(PARAM_ADDR_CITY,(uint8_t*)&all_param[3],sizeof(cfg_param_t));
+    
     rt_kprintf("mode = %d  write in flash\n", param_mode);
 
 }
@@ -405,8 +425,8 @@ FINSH_FUNCTION_EXPORT(mode_change, set mode by num:1-custom;2-highway;3-mountain
 void load_param_from_fl(void)
 {
     uint32_t param_addr;
-    p_cms_param = &cms_param;
-    
+
+
     if(param_mode == CUSTOM_MODE){
         param_addr = PARAM_ADDR_CUSTOM;
     }
@@ -420,7 +440,7 @@ void load_param_from_fl(void)
         param_addr = PARAM_ADDR_CITY;
     }
     
-    drv_fls_read(param_addr,(uint8_t *)p_cms_param,sizeof(cfg_param_t));
+    drv_fls_read(param_addr,(uint8_t *)&cms_param,sizeof(cfg_param_t));
     
 
 }
@@ -472,9 +492,8 @@ void param_init(void)
     param_mode = mode_get();
     //drv_fls_read(PARAM_MODE_ADDR,(uint8_t*)&param_mode,sizeof(uint16_t));
     if(strcmp((const char*)param_init_words,(const char*)magic_word) != 0){
-            p_cms_param = &cms_param;
             osal_printf("loading default param,mode is custom\n");
-            load_default_param_custom(p_cms_param);            
+            load_default_param_custom(&cms_param);            
             write_def_param();
     }
     else{
@@ -491,47 +510,53 @@ void param_get(void)
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"-------------------parameters in ram------------------\n");
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"work mode is %d\n",param_mode);
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------vam---------------------\n");
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"ID(0)=%d%d%d%d\n",p_cms_param->pid[0],p_cms_param->pid[1],p_cms_param->pid[2],p_cms_param->pid[3]);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_hops(1)=%d\n", p_cms_param->vam.bsm_hops);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_boardcast_mode(2)=%d\n", p_cms_param->vam.bsm_boardcast_mode);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_boardcast_saftyfactor(3)=%d\n", p_cms_param->vam.bsm_boardcast_saftyfactor);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_pause_mode(4)=%d\n", p_cms_param->vam.bsm_pause_mode);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_pause_hold_time(5)=%d (s)\n", p_cms_param->vam.bsm_pause_hold_time);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_boardcast_period(6)=%d (ms)\n", p_cms_param->vam.bsm_boardcast_period);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"ID(0)=%d%d%d%d\n",cms_param.pid[0],cms_param.pid[1],cms_param.pid[2],cms_param.pid[3]);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_hops(1)=%d\n", cms_param.vam.bsm_hops);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_boardcast_mode(2)=%d\n", cms_param.vam.bsm_boardcast_mode);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_boardcast_saftyfactor(3)=%d\n", cms_param.vam.bsm_boardcast_saftyfactor);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_pause_mode(4)=%d\n", cms_param.vam.bsm_pause_mode);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_pause_hold_time(5)=%d (s)\n", cms_param.vam.bsm_pause_hold_time);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.bsm_boardcast_period(6)=%d (ms)\n", cms_param.vam.bsm_boardcast_period);
 
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.evam_hops(7)=%d\n", p_cms_param->vam.evam_hops);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.evam_broadcast_type(8)=%d\n", p_cms_param->vam.evam_broadcast_type);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.evam_broadcast_peroid(9)=%d (ms)\n\n", p_cms_param->vam.evam_broadcast_peroid);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.evam_hops(7)=%d\n", cms_param.vam.evam_hops);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.evam_broadcast_type(8)=%d\n", cms_param.vam.evam_broadcast_type);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vam.evam_broadcast_peroid(9)=%d (ms)\n\n", cms_param.vam.evam_broadcast_peroid);
 
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------vsa---------------------\n");
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.danger_detect_speed_threshold(10)=%d (km/h)\n", p_cms_param->vsa.danger_detect_speed_threshold);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.lane_dis(11)=%d (m)\n", p_cms_param->vsa.lane_dis);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.danger_detect_speed_threshold(10)=%d (km/h)\n", cms_param.vsa.danger_detect_speed_threshold);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.lane_dis(11)=%d (m)\n", cms_param.vsa.lane_dis);
     
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_saftyfactor(12)=%d\n", p_cms_param->vsa.crd_saftyfactor);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_oppsite_speed(13)=%d (km/h)\n", p_cms_param->vsa.crd_oppsite_speed);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_oppsite_rear_speed(14)=%d (km/h)\n", p_cms_param->vsa.crd_oppsite_rear_speed);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_rear_distance(15)=%d (m)\n", p_cms_param->vsa.crd_rear_distance);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_saftyfactor(12)=%d\n", cms_param.vsa.crd_saftyfactor);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_oppsite_speed(13)=%d (km/h)\n", cms_param.vsa.crd_oppsite_speed);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_oppsite_rear_speed(14)=%d (km/h)\n", cms_param.vsa.crd_oppsite_rear_speed);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.crd_rear_distance(15)=%d (m)\n", cms_param.vsa.crd_rear_distance);
 
         
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.ebd_mode(16)=%d\n", p_cms_param->vsa.ebd_mode);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.ebd_acceleration_threshold(17)=%d (m/s2)\n", p_cms_param->vsa.ebd_acceleration_threshold);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.ebd_alert_hold_time(18)=%d (s)\n\n", p_cms_param->vsa.ebd_alert_hold_time);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.ebd_mode(16)=%d\n", cms_param.vsa.ebd_mode);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.ebd_acceleration_threshold(17)=%d (m/s2)\n", cms_param.vsa.ebd_acceleration_threshold);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"vsa.ebd_alert_hold_time(18)=%d (s)\n\n", cms_param.vsa.ebd_alert_hold_time);
 
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------gsnr---------------------\n");
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_cal_step(19)=%d\n",p_cms_param->gsnr.gsnr_cal_step);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_cal_thr(20)=%d\n",p_cms_param->gsnr.gsnr_cal_thr);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_ebd_thr(21)=%d\n",p_cms_param->gsnr.gsnr_ebd_thr);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_ebd_cnt(22)=%d\n",p_cms_param->gsnr.gsnr_ebd_cnt);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceV_x(23)=%d\n",p_cms_param->gsnr.AcceV_x);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceV_y(24)=%d\n",p_cms_param->gsnr.AcceV_y);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceV_z(25)=%d\n",p_cms_param->gsnr.AcceV_z);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceAhead_x(26)=%d\n",p_cms_param->gsnr.AcceAhead_x);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceAhead_y(27)=%d\n",p_cms_param->gsnr.AcceAhead_y);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceAhead_z(28)=%d\n",p_cms_param->gsnr.AcceAhead_z);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_cal_step(19)=%d\n",cms_param.gsnr.gsnr_cal_step);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_cal_thr(20)=%d\n",cms_param.gsnr.gsnr_cal_thr);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_ebd_thr(21)=%d\n",cms_param.gsnr.gsnr_ebd_thr);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.gsnr_ebd_cnt(22)=%d\n",cms_param.gsnr.gsnr_ebd_cnt);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceV_x(23)=%d\n",cms_param.gsnr.AcceV_x);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceV_y(24)=%d\n",cms_param.gsnr.AcceV_y);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceV_z(25)=%d\n",cms_param.gsnr.AcceV_z);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceAhead_x(26)=%d\n",cms_param.gsnr.AcceAhead_x);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceAhead_y(27)=%d\n",cms_param.gsnr.AcceAhead_y);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"gsnr.AcceAhead_z(28)=%d\n",cms_param.gsnr.AcceAhead_z);
 
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------wnet---------------------\n");
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"wnet.channel(29)=%d\n",p_cms_param->wnet.channel);
-    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"wnet.txrate(30)=%d\n",p_cms_param->wnet.txrate);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"wnet.channel(29)=%d\n",cms_param.wnet.channel);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"wnet.txrate(30)=%d\n",cms_param.wnet.txrate);
+
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------voc----------------------\n");
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"voc.fg_volume(32)=%d\n",cms_param.voc.fg_volume);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"voc.bg_volume(33)=%d\n",cms_param.voc.bg_volume);
+    OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"voc.speed(34)=%d\n",cms_param.voc.speed);
+
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"...\n");
 
     OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"----------------------end---------------------\n");
@@ -748,16 +773,28 @@ int param_set(uint8_t param, int32_t value)
     case 30:
         cfg_param->wnet.txrate = value;
         break;
+        
     case 31:
         cfg_param->print_xxx = value;
         break;
+        
+    case 32:
+        cfg_param->voc.fg_volume = value;
+        break;
+    case 33:
+        cfg_param->voc.bg_volume = value;
+        break;
+    case 34:
+        cfg_param->voc.speed = value;
+        break;
+        
     default:          
         rt_kprintf("invalid  parameter  number!!\n");
         break;
 
     }
 
-    memcpy((uint8_t*)p_cms_param,(uint8_t*)cfg_param,sizeof(cfg_param_t));
+    memcpy((uint8_t*)&cms_param,(uint8_t*)cfg_param,sizeof(cfg_param_t));
 
 
     rt_kprintf("param is setting .....please don't power off!\n");
@@ -874,7 +911,11 @@ uint8_t flash_read(uint8_t mode)
     rt_kprintf("wnet.channel(29)=%d\n",param_temp->wnet.channel);
     rt_kprintf("wnet.txrate(30)=%d\n",param_temp->wnet.txrate);
 
-
+    rt_kprintf("----------------------voc---------------------\n");    
+    rt_kprintf("voc.fg_volume(32)=%d\n",param_temp->voc.fg_volume);
+    rt_kprintf("voc.bg_volume(33)=%d\n",param_temp->voc.bg_volume);
+    rt_kprintf("voc.speed(34)=%d\n",param_temp->voc.speed);
+    
     rt_kprintf("...\n");
 
     rt_kprintf("----------------------end---------------------\n");    
@@ -927,7 +968,7 @@ int8_t  gsnr_param_set(uint8_t gsnr_cal_step,int32_t AcceV_x,int32_t AcceV_y,int
     cfg_param->gsnr.AcceAhead_y = AcceAhead_y;
     cfg_param->gsnr.AcceAhead_z = AcceAhead_z;
 
-    memcpy((uint8_t*)p_cms_param,(uint8_t*)cfg_param,sizeof(cfg_param_t));
+    memcpy((uint8_t*)&cms_param,(uint8_t*)cfg_param,sizeof(cfg_param_t));
 
 
     rt_kprintf("gsnr is setting .....please don't power off!\n");
