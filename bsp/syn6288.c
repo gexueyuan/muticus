@@ -300,7 +300,7 @@ FINSH_FUNCTION_EXPORT(play_test, sound test);
 
 void syn6288_set(uint8_t fg_vol,uint8_t bg_vol,uint8_t speed)
 {
-    char vol_char[] = "[d][v8][m2][t5][o0]";//[d] global default;[v8] foreground vol is 8;
+    char vol_char[] = "[d][v8][m2][t5]";//[d] global default;[v8] foreground vol is 8;
 
     vol_char[5] = fg_vol + 0x30;
 
@@ -312,13 +312,20 @@ void syn6288_set(uint8_t fg_vol,uint8_t bg_vol,uint8_t speed)
 
 }
 
+void set_voc(void)
+{
+    /* load voc param from flash */
+	voc_config_t *p_voc_param = NULL;	
+
+    p_voc_param = &p_cms_param->voc;
+    
+    syn6288_set(p_voc_param->fg_volume,p_voc_param->bg_volume,p_voc_param->speed);
+}
 
 
 uint8_t syn6288_hw_init(void)
 {
-    /* load voc param from flash */
-	voc_config_t *p_voc_param = NULL;		
-    p_voc_param = &p_cms_param->voc;
+	
 
     audio_io_init();
     
@@ -326,8 +333,8 @@ uint8_t syn6288_hw_init(void)
     
     rt_device_open(syn6288_dev,RT_DEVICE_OFLAG_RDWR);
     
-    syn6288_set(p_voc_param->fg_volume,p_voc_param->bg_volume,p_voc_param->speed);
-        
+    //set_voc();
+    
     audio_enble();
     
     return 0;

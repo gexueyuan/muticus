@@ -58,7 +58,10 @@ extern void led_blink(Led_TypeDef led);
 
 extern int param_set(uint8_t param, int32_t value);
 
-extern void play(char *txt);
+extern void syn6288_play(char *txt);
+extern void set_voc(void);
+extern void sound_alert_start(uint32_t alert_type,uint32_t distance);
+extern void sound_alert_stop(void);
 
 /*****************************************************************************
  * implementation of functions                                               *
@@ -254,8 +257,10 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         {
             case HI_OUT_SYS_INIT:
             {
-                //sound_notice_di();              
-                //play("sounde");
+                //sound_notice_di();\
+                //syn6288_play("[1]soundb");
+                //osal_delay(50);
+                set_voc();
                 p_sys->status |= 1<<HI_OUT_GPS_LOST;
                 break;
             }
@@ -269,7 +274,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_CRD_ALERT:
         {
-            //sound_alert_start(HI_OUT_CRD_ALERT);
+            sound_alert_start(HI_OUT_CRD_ALERT,100);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CFCW alert start!!\n\n");
             if(p_sys->status&(1<<HI_OUT_CRD_ALERT))
             {
@@ -284,7 +289,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 
         case HI_OUT_CRD_REAR_ALERT:            
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CRCW alert start!!\n\n");
-            //sound_alert_start(HI_OUT_CRD_REAR_ALERT);
+            sound_alert_start(HI_OUT_CRD_REAR_ALERT,100);
             if(p_sys->status&(1<<HI_OUT_CRD_REAR_ALERT)){
                 return;
             }
@@ -295,7 +300,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_VBD_ALERT:  
 
-            //sound_alert_start(HI_OUT_VBD_ALERT);
+            sound_alert_start(HI_OUT_VBD_ALERT,100);
             if(p_sys->status&(1<<HI_OUT_VBD_ALERT)){
                 return;
             }
@@ -307,7 +312,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 
         case HI_OUT_EBD_ALERT:
            
-            //sound_alert_start(HI_OUT_EBD_ALERT);
+            sound_alert_start(HI_OUT_EBD_ALERT,100);
             if(p_sys->status&(1<<HI_OUT_EBD_ALERT)){
                 return;
             }
@@ -320,7 +325,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_CRD_CANCEL:
             
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_CRD_ALERT);               
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CFCW  alert cancel!!\n\n");
@@ -330,7 +335,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_CRD_REAR_CANCEL:
             
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_CRD_REAR_ALERT);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CRCW alert cancel!!\n\n");
@@ -340,7 +345,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_VBD_CANCEL:
 
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_VBD_ALERT);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI vbd alert cancel!!\n\n");
@@ -349,7 +354,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_EBD_CANCEL://cancel alarm
        
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_EBD_ALERT);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI EEBL alert  cancel!!\n\n");
@@ -372,7 +377,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_CANCEL_ALERT:
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~((1<<HI_OUT_EBD_ALERT)|(1<<HI_OUT_VBD_ALERT)|(1<<HI_OUT_CRD_ALERT));
             break;
@@ -482,9 +487,9 @@ void sys_init(void)
 
 
     p_sys->timer_voc = osal_timer_create("tm-voc",sound_alert_process, p_sys,\
-        MS_TO_TICK(500),TRUE);                     
+        MS_TO_TICK(500),FALSE);                     
     osal_assert( p_sys->timer_voc != NULL);
-    osal_timer_start(p_sys->timer_voc);
+    //osal_timer_start(p_sys->timer_voc);
 
     p_sys->task_sys_hi = osal_task_create("t-hi",
                            rt_hi_thread_entry, p_sys,

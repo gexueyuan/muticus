@@ -176,22 +176,6 @@ typedef struct _nmea_frame_gsa_st
 
 
 
-
-
-
-
-
-
-/* Longitude resolution for screen. uint: pixel/degree. */
-#define RESOLUTION_LONGITUDE_DEFAULT    750//(7500)
-#define RESOLUTION_LONGITUDE_MAX        (1000000)
-#define RESOLUTION_LONGITUDE_MIN        (100)
-
-/* Latitude resolution for screen. uint: pixel/degree. */
-#define RESOLUTION_LATITUDE_DEFAULT     750//(7500)
-#define RESOLUTION_LATITUDE_MAX         (1000000)
-#define RESOLUTION_LATITUDE_MIN         (100)
-
 /* Local vehicle's coordinate. */
 #define LOCAL_COORDINATE_X               128  
 #define LOCAL_COORDINATE_Y               135
@@ -208,22 +192,6 @@ typedef drv_lcd_circle_draw_st vec_disp_st, *vec_disp_st_ptr;
 #define VEC_DISP_ST_LEN    (sizeof(vec_disp_st))
  
 
-/* Vehicles information structure. */
-typedef struct _vec_graph_st
-{
-    /* Screen resolution for longitude and latitude. uint: pixel/degree.*/
-    uint32_t resolution_longitude;
-    uint32_t  resolution_latitude;
-
-    /* Vehicle parameters group for display. */
-    uint32_t              vec_num;
-    vec_disp_st     vec_group[20];
-
-}vec_graph_st, *vec_graph_st_ptr;
-
-#define VEC_GRAPH_ST_LEN    (sizeof(vec_graph_st))
-
-
 
 /* Vehicle parameter structure.-------------------------------------------*/
 typedef struct _vec_param_st
@@ -237,17 +205,26 @@ typedef struct _vec_param_st
 #define VEC_PARAM_ST_LEN    (sizeof(vec_param_st))
 
 /* Macro for "road mode". */
-#define VEC_ROADMODE_HIGHWAY    0x00
-#define VEC_ROADMODE_MOUNTAIN   0x01
-#define VEC_ROADMODE_CITY       0x02
+#define VEC_ROADMODE_HIGHWAY          0x00
+#define VEC_ROADMODE_MOUNTAIN         0x01
+#define VEC_ROADMODE_CITY             0x02
+
+#define VEC_ROADMODE_INDEX_MIN        0x00
+#define VEC_ROADMODE_INDEX_MAX        0x02
 
 /* Macro for "vec_mode". */
-#define VEC_VECMODE_CAR         0x00
-#define VEC_VECMODE_AMBULANCE   0x01
+#define VEC_VECMODE_CAR               0x00
+#define VEC_VECMODE_AMBULANCE         0x01
+ 
+#define VEC_VECMODE_INDEX_MIN         0x00
+#define VEC_VECMODE_INDEX_MAX         0x01
 
 /* Macro for "breakdown_mode". */
-#define VEC_BREAKDOWNMODE_NO    0x00
-#define VEC_BREAKDOWNMODE_YES   0x01
+#define VEC_BREAKDOWNMODE_NO          0x00
+#define VEC_BREAKDOWNMODE_YES         0x01
+
+#define VEC_BREAKDOWNMODE_INDEX_MIN   0x00
+#define VEC_BREAKDOWNMODE_INDEX_MAX   0x01
 
 
 /* System parameter structure.--------------------------------------------*/

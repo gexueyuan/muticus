@@ -27,26 +27,8 @@
 #include "dat_lcd_font.h"
 
 
-
-/* Vehicles information group. */
-static vec_graph_st VecGraph = 
-{ 
-    RESOLUTION_LONGITUDE_DEFAULT, RESOLUTION_LATITUDE_DEFAULT,
-    0,
-    {
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 },
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 },
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 },
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 },
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 },
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 },
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 },
-        { LCD_FOREGROUND_LAYER,   0,   0, 4, LCD_CIRCLE_FILLED,          0x4444 } 
-    }
-};
-
 /* Vehicle parameter. */
-static sys_param_st SysParam = 
+sys_param_st SysParam = 
 {
     SYS_SYSMODE_NORMAL,                                               /* sys_mode. */
     { VEC_ROADMODE_HIGHWAY, VEC_VECMODE_CAR, VEC_BREAKDOWNMODE_NO },  /* vec_param. */
@@ -248,39 +230,66 @@ static void lcd_vec_param_init
   */
 static void lcd_vec_graph_init
 (
-    /* Pointer to vehicle graph structure. */
-    vec_graph_st_ptr vec_graph_ptr
+    /* No parameter. */
+    void
 )
 {
-    uint32_t            vec_index = 0;
+    /* Vehicle attribute for display. Caution: all vehicles share one attribute. */
+    vec_disp_st vec_attr = { LCD_FOREGROUND_LAYER,   0,   0, 2, LCD_CIRCLE_FILLED,     0x0f00 };
+    uint32_t   vec_index = 0;
+    uint32_t     vec_num = 0;
+ 
+    /* Vehicle relative position in lcd screen. */
+    enum VSA_TARGET_LOCATION position = POSITION_ERROR;
+    int32_t           vertical_offset = 0;
+    int32_t         horizontal_offset = 0;
+
     uint8_t peer_pid[VAM_NEIGHBOUR_MAXNUM][RCP_TEMP_ID_LEN] = { 0 };
-    
-    vam_stastatus_t  local_status = { 0 };  
-    vam_stastatus_t remote_status = { 0 };
+    vsa_envar_t *vsa_ptr = &p_cms_envar->vsa;
 
 
-    osal_assert(vec_graph_ptr!= RT_NULL);
-   
-    vam_get_all_peer_pid(peer_pid, VAM_NEIGHBOUR_MAXNUM, &(vec_graph_ptr->vec_num));
-    vam_get_local_current_status(&local_status);
+    /* Get active vehicle number. */
+    vam_get_all_peer_pid(peer_pid, VAM_NEIGHBOUR_MAXNUM, &vec_num);
 
     /* Get all the specific peer's status. */
-    for (vec_index = 0; vec_index < vec_graph_ptr->vec_num; vec_index++) 
+    for (vec_index = 0; vec_index < vec_num; vec_index++) 
     {
-        vam_get_peer_current_status(peer_pid[vec_index], &remote_status);            
-        
-        /* Update vehicle's coordinate based on longitude and latitude. */
-        vec_graph_ptr->vec_group[vec_index].x = LOCAL_COORDINATE_X + (remote_status.pos.lon - local_status.pos.lon) * vec_graph_ptr->resolution_longitude;
-        vec_graph_ptr->vec_group[vec_index].y = LOCAL_COORDINATE_Y + (remote_status.pos.lat - local_status.pos.lat) * vec_graph_ptr->resolution_latitude;
-    }
+        position = (enum VSA_TARGET_LOCATION)vsa_ptr->position_node[vec_index].vsa_position.vsa_location;
 
-    /* Draw all the active vehicle on screen. */
-    for(vec_index = 0; vec_index < vec_graph_ptr->vec_num; vec_index ++)
-    {
-        DRV_LCD_PTR->ioctl(DRV_LCD_PTR, LCD_IOCTL_DRAW_CIRCLE, vec_graph_ptr->vec_group + vec_index);
-    }  
+        /* Jump out of current loop and start next loop. */
+        if(position == POSITION_ERROR)
+        {
+            continue;
+        }
+
+        /* Revise the horizontal and vertical offset based on vehicle position. */
+        if( (position == AHEAD_RIGHT) || (position == RIGHT) || (position == BEHIND_RIGHT) 
+         || (position == AHEAD) || (position == BEHIND) )
+        {
+            horizontal_offset = vsa_ptr->position_node[vec_index].vsa_position.h_offset;
+        }
+        else
+        {
+            horizontal_offset = - vsa_ptr->position_node[vec_index].vsa_position.h_offset;
+        }
+        if( (position == AHEAD) || (position == AHEAD_LEFT) || (position == AHEAD_RIGHT) 
+         || (position == LEFT)  || (position == RIGHT) )
+        {
+            vertical_offset = - vsa_ptr->position_node[vec_index].vsa_position.v_offset; 
+        }
+        else
+        {
+            vertical_offset = vsa_ptr->position_node[vec_index].vsa_position.v_offset; 
+        }
+ 
+        /* Update vehicle's coordinate. */
+        vec_attr.x = LOCAL_COORDINATE_X + horizontal_offset / 2;
+        vec_attr.y = LOCAL_COORDINATE_Y + vertical_offset / 2;
+
+        /* Draw the active vehicle on screen. */
+        DRV_LCD_PTR->ioctl(DRV_LCD_PTR, LCD_IOCTL_DRAW_CIRCLE, &vec_attr);
+    } 
 }
-
 
 
 /**
@@ -397,13 +406,12 @@ void lcd_thread_entry
         lcd_vec_param_init(backup_layer, &SysParam);
       
         /* Initial vehicle graph. */
-        lcd_vec_graph_init(&VecGraph);
+        lcd_vec_graph_init();
 
         /* Initial vehicle information. */
         lcd_vec_infor_init(backup_layer);
         
-
-       
+  
         /* Active the backup layer and inactive primary layer. */
         lcd_layer_active(backup_layer);
         lcd_layer_inactive(primary_layer);

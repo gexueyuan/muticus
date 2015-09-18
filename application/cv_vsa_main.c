@@ -1229,10 +1229,11 @@ void vsa_init()
 
     vsa_envar_t *p_vsa = &p_cms_envar->vsa;
     
-    p_vsa->vsa_mode = ~CUSTOM_MODE;
     
     memset(p_vsa, 0, sizeof(vsa_envar_t));
     memcpy(&p_vsa->working_param, &p_cms_param->vsa, sizeof(vsa_config_t));
+    
+    p_vsa->vsa_mode = ~(mode_get());//CUSTOM_MODE;
     
     INIT_LIST_HEAD(&p_vsa->crd_list);    
     INIT_LIST_HEAD(&p_vsa->position_list);    

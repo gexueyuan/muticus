@@ -29,4 +29,5 @@ void syn6288_set(uint8_t fg_vol,uint8_t bg_vol,uint8_t speed);
 
 uint8_t syn6288_state(void);
 
+uint8_t syn6288_hw_init(void);
 

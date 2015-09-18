@@ -59,9 +59,9 @@ void test_comm(void)
 /*****************************************************************************
  * declaration of variables and functions                                    *
 *****************************************************************************/
-//int drv_wifi_send(wnet_txinfo_t *txinfo, uint8_t *pdata, int32_t length);
+int wnet_usart_send(wnet_txinfo_t *txinfo, uint8_t *pdata, int32_t length);
 //int drv_wifi_mac_header_len(void);
-
+#define drv_wifi_mac_header_len 52
 extern wnet_envar_t *p_wnet_envar;
 
 /*****************************************************************************
@@ -142,7 +142,7 @@ void fp_tx_handler(wnet_envar_t *p_wnet)
     
     if (send_next)
     {
-       // if (drv_wifi_send(&txbuf->info, txbuf->data_ptr, txbuf->data_len) < 0) 
+        if (wnet_usart_send(&txbuf->info, txbuf->data_ptr, txbuf->data_len) < 0) 
         {
             /* At this time, the phy layer may be not ready, we should release the txbuf manually */
             fp_tx_complete(p_wnet);
@@ -253,7 +253,7 @@ wnet_txbuf_t *fp_get_txbuf(wnet_envar_t *p_wnet)
         txbuf = list_first_entry(p_txbuf_free_list, wnet_txbuf_t, list);
         
         list_del(&txbuf->list);
-        //txbuf->data_ptr = txbuf->buffer + TXBUF_RESERVE_LENGTH + drv_wifi_mac_header_len();
+        txbuf->data_ptr = txbuf->buffer + TXBUF_RESERVE_LENGTH + drv_wifi_mac_header_len;//drv_wifi_mac_header_len();
         txbuf->data_len = 0;
     }
     

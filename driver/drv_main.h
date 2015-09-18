@@ -24,7 +24,8 @@
 /* User configuration for driver modules. */
 
 #define DRV_ENABLE_SDRAM  1
-#define DRV_ENABLE_LCD    1     
+#define DRV_ENABLE_LCD    1   
+#define DRV_ENABLE_TSC    1     
 #define DRV_ENABLE_WNET   1
 
 
@@ -53,6 +54,12 @@
  #error "!!! You must enable sdram module when using lcd module. !!!"
 #endif   
 
+#endif
+
+
+/* Touch sensor control module. */
+#if DRV_ENABLE_TSC
+ #include "drv_tsc.h"
 #endif
 
 

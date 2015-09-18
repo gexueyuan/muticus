@@ -33,10 +33,11 @@
 
 
 #include "cv_lcd.h"
+#include "app_tsc.h"
 #include "app_interface.h"
 #include "drv_main.h"
 
-#include "stm32f429i_discovery_ioe.h"
+#include "bsp_tsc_STMPE811.h"
 
 extern void osal_dbg_init(void);
 extern void rt_platform_init(void);
@@ -53,7 +54,6 @@ extern int rt_key_init(void);
 extern void mda_init(void);
 extern void voc_init(void);
 extern void cpu_usage_init(void);
-extern uint8_t syn6288_hw_init(void);
 extern uint8_t IOE_Config(void);
 cms_global_t cms_envar, *p_cms_envar;
 
@@ -90,30 +90,26 @@ void rt_init_thread_entry(void *parameter)
     
     global_init();
     param_init();
-    //cpu_usage_init();
+    //cpu_usage_init();    
+    voc_init();    
     gps_init();
   	nmea_init();
     rt_led_init();
 	rt_key_init();
    // usb_init();
-    
-   
-		
-   syn6288_hw_init();
-    
+        
     wnet_init();
     vam_init();
     mda_init();
     gsnr_init();   
-    //voc_init();    
     vsa_init();    
     sys_init();   
-    IOE_Config();
     
     
     
     lcd_thread_init();
-    ui_thread_init();
+    tsc_thread_init();
+    
     
 }
 
@@ -123,23 +119,13 @@ void qc_init_entry(void *parameter)
     param_init();
     qc_run_init();
 }
-void tc_timercallback(void * param)
-{
 
-    TP_STATE  *ts;
-
-    rt_enter_critical();
-    ts = IOE_TP_GetState();
-    rt_exit_critical();
-
-if(ts->TouchDetected)
-    rt_kprintf("x:%d   y:%d \n",ts->X,ts->Y);
-}
 int rt_application_init(void)
 {
     rt_thread_t tid;
     active_qc_way_e   active_qc_way;
-    rt_timer_t tc_timer;
+    
+    
     rt_components_init();
     rt_platform_init();
     osal_dbg_init();
@@ -164,9 +150,6 @@ int rt_application_init(void)
         osal_assert(tid != NULL);
     }
 
-    tc_timer = rt_timer_create("tc-timer",tc_timercallback,RT_NULL,10,RT_TIMER_FLAG_PERIODIC);
-    //if(tc_timer != RT_NULL)
-        //rt_timer_start(tc_timer);
     return 0;
 }
 

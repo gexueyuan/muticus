@@ -19,25 +19,26 @@
 #include "voc.h"
 
 
+
 #define SOUND_PLAY_INTERVAL MS_TO_TICK(200)
 #define BIBI_PRE_COUNT 3
-#define MAX_VOICE  4  /* MUST BE such value as 2,4,8,16... */
+#define MAX_VOICE  6  /* MUST BE such value as 2,4,8,16... */
 static uint8_t voice[MAX_VOICE];
 static uint32_t voice_wr_idx;
 static uint32_t voice_rd_idx;
 static uint32_t phase = 0;
 
 #define NOTICE_STRING  "soundb"
-#define CFCW_VOC "[3]请注意前方[2]车辆" //"北京[3]东直门站到了"//
+#define CFCW_VOC "[3]请注意[2]前车[2]距离" //"北京[3]东直门站到了"//
 #define CRCW_VOC "后方超车"
 #define EEBL_VOC "前方急刹"
-#define VBD_VOC "[2]前方[2]车辆[2]故障"  
+#define VBD_VOC "[2]前方有故障车"  
 
+#define FRONT "前方"
+#define MI "米"
 
-void voc_stop(void)
-{
-    syn6288_stop();
-}
+char  play_string[50];
+uint32_t voc_distance;
 
 static void sound_play_complete(void)
 {
@@ -51,18 +52,30 @@ static void sound_play_complete(void)
 
 static void notice_di_play_once(void *complete)
 {
-    syn6288_play(NOTICE_STRING);
+    //syn6288_play(NOTICE_STRING);
+
+    //sound_play_complete();
+    
+    voc_play(VOC_ENCODE_ADPCM, NOTICE_STRING, 0, (voc_handler)complete);
 }
 
 static void voice_play_once(uint32_t alert_type, void *complete)
 {
     uint8_t *data;
-    uint32_t length;
+    uint32_t length = 0;
+    char distance_char[10];
+    memset(play_string,0,sizeof(play_string));   
 
     switch (alert_type) {
                
     case HI_OUT_CRD_ALERT:
-        data = CFCW_VOC;
+        //data = CFCW_VOC;
+        sprintf(distance_char,"%d", voc_distance);
+        strcpy(play_string,FRONT);
+        strcat(play_string,(const char*)distance_char);// (const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);
+        osal_printf("string is %s\n",play_string);
+        data= play_string;
         break;
 
     case HI_OUT_CRD_REAR_ALERT:
@@ -88,11 +101,14 @@ static void voice_play_once(uint32_t alert_type, void *complete)
 
 void sound_notice_di(void)
 {
-    notice_di_play_once(sound_play_complete);
+    notice_di_play_once(NULL);
 }
 
-void sound_alert_start(uint32_t alert_type)
+void sound_alert_start(uint32_t alert_type,uint32_t distance)
 {
+
+    voc_distance = distance;
+    
     if (alert_type != HI_OUT_NONE) {
         voice[voice_wr_idx] = alert_type;
         if (++voice_wr_idx >= MAX_VOICE) {
@@ -110,17 +126,21 @@ void sound_alert_start(uint32_t alert_type)
 void alert_start(uint32_t alert_type)
 {
     //sound_alert_start(alert_type);
-    voice_play_once(alert_type,NULL);
+    //voice_play_once(alert_type,NULL);
+    sound_alert_start(alert_type,100);
+
+    
 }
 FINSH_FUNCTION_EXPORT(alert_start, alert_start);
 
-void sound_alert_stop()
+void sound_alert_stop(void)
 {
     osal_enter_critical();
     phase = 0;
     osal_leave_critical();
 
-    voc_stop();
+    voc_stop(NULL);
+    syn6288_stop();
     memset(voice, 0, sizeof(voice));
     voice_wr_idx = 0;
     voice_rd_idx = 0;

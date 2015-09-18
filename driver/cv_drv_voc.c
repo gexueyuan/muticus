@@ -22,7 +22,7 @@
 #include "assert.h"
 #include "cv_cms_def.h"
 #include "voc.h"
-
+#include "syn6288.h"
 
 short buffer_voc[BUFFER_COUNT][BUFFER_SIZE/2]; 
 
@@ -40,107 +40,6 @@ osal_queue_t *queue_play;
 static voc_session_t voc_session;
 static uint32_t voc_status;
 
-
-static ADPCMState adpcm_state;
-
-
-static const int indexTable[ 16 ] = {
-	-1, -1, -1, -1, 2, 4, 6, 8,
-	-1, -1, -1, -1, 2, 4, 6, 8
-} ;
-/* define an array of index adjustments to the step index value */
-
-#define	MAXSTEPINDEX	88
-/* define the maximum value to access the top element of stepSizeTable below */
-
-static const int stepSizeTable[ MAXSTEPINDEX + 1 ] = {
-	    7,     8,     9,    10,    11,    12,    13,    14,    16,    17,
-	   19,    21,    23,    25,    28,    31,    34,    37,    41,    45,
-	   50,    55,    60,    66,    73,    80,    88,    97,   107,   118,
-	  130,   143,   157,   173,   190,   209,   230,   253,   279,   307,
-	  337,   371,   408,   449,   494,   544,   598,   658,   724,   796,
-	  876,   963,  1060,  1166,  1282,  1411,  1552,  1707,  1878,  2066,
-	 2272,  2499,  2749,  3024,  3327,  3660,  4026,  4428,  4871,  5358,
-	 5894,  6484,  7132,  7845,  8630,  9493, 10442, 11487, 12635, 13899,
-	15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
-} ;
-
-
-int DecodeADPCMC( int adpcmSample, ADPCMStatePtr decodeStatePtr )
-{
-    int step ;
-    int delta ;
-    int predictionAdjustment ;
-    
-    if( ( adpcmSample < 0 ) || ( adpcmSample > 15 ) ) {
-		OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_ERROR,"[DecodeADPCMC] Error in ADPCM sample, aborting.\n\n");
-        /* function name given since intended as internal error for programmer */
-        return 0 ;
-    }
-    
-    if( !decodeStatePtr ) {
-		OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_ERROR,"[DecodeADPCMC] Error in ADPCMState, aborting.\n\n");
-        /* function name given since intended as internal error for programmer */
-        return 0 ;
-    }
-        
-    step = stepSizeTable[ decodeStatePtr->stepIndex ] ;
-    
-    delta = adpcmSample ;
-
-    decodeStatePtr->stepIndex += indexTable[ delta ] ;
-    /* range check the stepIndex */
-    if( decodeStatePtr->stepIndex < 0 ) {
-        decodeStatePtr->stepIndex = 0 ;
-    }
-    else if( decodeStatePtr->stepIndex > MAXSTEPINDEX ) {
-        decodeStatePtr->stepIndex = MAXSTEPINDEX ;
-    }
-
-    /* remove sign from delta - pull to 3-bit */
-    if( delta > 7 ) {
-        delta -= 8 ;
-    }
-    
-    predictionAdjustment = ( 2*delta + 1 )* step/8 ;
-    if( adpcmSample > 7 ) {
-        decodeStatePtr->prediction -= predictionAdjustment ;
-    }
-    else {
-        decodeStatePtr->prediction += predictionAdjustment ;
-    }
-    
-    /* range check the prediction so that fits in number of bits */
-    if( decodeStatePtr->prediction > ( 1 << ( MAXBITS - 1 ) ) - 1 ) {
-        decodeStatePtr->prediction = ( 1 << ( MAXBITS - 1 ) ) - 1 ;
-    }
-    else if( decodeStatePtr->prediction < -( 1 << ( MAXBITS - 1 ) ) ) {
-        decodeStatePtr->prediction = -( 1 << ( MAXBITS - 1 ) ) ;
-    }
-
-    return decodeStatePtr->prediction ;
-}
-
-int adpcm_de(char *code, short *pcm, int count)
-{
-    int a,b;
-    short p;
-
-    RT_ASSERT((code != NULL)&&(pcm!= NULL)&&(count >0));
-
-    while(count--){
-        a = *code ++;
-        b = (a>>4)&0x0f;
-        p = DecodeADPCMC(b,&adpcm_state);
-        *pcm++ = p;
-        *pcm++ = p; // expand to stero
-        b = (a)&0x0f;
-        p = DecodeADPCMC(b,&adpcm_state); 
-        *pcm++ = p;
-        *pcm++ = p;
-    }
-    return 0;
-}
 
 void voc_play_complete(void)
 {
@@ -185,7 +84,7 @@ static int wait_for(osal_sem_t *sem)
 static void audio_output(uint16_t* pBuffer, uint32_t Size)
 {
     VOC_STATUS_SET(VOC_STATUS_DEV_BUSY);
-    Pt8211_AUDIO_Play(pBuffer, Size);
+    //Pt8211_AUDIO_Play(pBuffer, Size);
 }
 
 void adpcm_process(uint8_t *pBuffer, uint32_t Size)
@@ -200,7 +99,7 @@ void adpcm_process(uint8_t *pBuffer, uint32_t Size)
 
         decode_size = (Size > BUFFER_SIZE/8)? (BUFFER_SIZE/8):Size;
         memset(buffer_voc[cursor_decode%BUFFER_COUNT], 0, BUFFER_SIZE);
-        adpcm_de((char *)pBuffer,buffer_voc[cursor_decode%BUFFER_COUNT],decode_size);
+        //adpcm_de((char *)pBuffer,buffer_voc[cursor_decode%BUFFER_COUNT],decode_size);
         osal_sem_release(sem_adpcm_data);
 
         Size -= decode_size;
@@ -285,7 +184,7 @@ void rt_play_thread_entry(void *parameter)
     osal_status_t err;
     uint8_t *p_msg;
     voc_session_t *session = &voc_session;
-
+    uint8_t  state; 
 
     while(1)
     {
@@ -296,24 +195,19 @@ void rt_play_thread_entry(void *parameter)
 
             memcpy(session, p_msg, sizeof(voc_session_t));
             osal_free(p_msg);
+            state = syn6288_state();
+            while(state){
 
-            switch (session->encode_type) {
-            case VOC_ENCODE_ADPCM:
-                adpcm_play(session->src_data, session->src_length);
-                break;
+                rt_thread_delay(10);
 
-            default:
-                pcm_play(session->src_data, session->src_length);
-                break;
+                state = syn6288_state();
             }
-
-            osal_sem_take(sem_play_complete,OSAL_WAITING_FOREVER);
-
-            /* Recover to initial value */
-            
-            osal_sem_set(sem_adpcm_data, 0);
-            osal_sem_set(sem_buffer_voc, BUFFER_COUNT);
-            osal_sem_set(sem_audio_dev, 1);            
+            if(VOC_STATUS_TST(VOC_STATUS_PLAYING)){
+                
+                osal_printf("out put string is %s\n",session->src_data);
+                syn6288_play(session->src_data);
+                }
+                      
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_TRACE,"finish sem_audio_dev is %d\n",sem_audio_dev->value);
             VOC_STATUS_CLR(VOC_STATUS_MASK);
 
@@ -333,11 +227,15 @@ void voc_init(void)
     osal_task_t  *thread;
 
     voc_status = 0;
-
+    
+    syn6288_hw_init();
+    
 	sem_adpcm_data = osal_sem_create("sem-play",0);
 	osal_assert(sem_adpcm_data != NULL);
 
-
+    queue_play = osal_queue_create("q-play",  VOC_QUEUE_SIZE);
+    osal_assert(queue_play != NULL);
+    
     thread = osal_task_create("t-play",
                            rt_play_thread_entry, NULL,
                            RT_VSA_THREAD_STACK_SIZE, RT_PLAY_THREAD_PRIORITY);
