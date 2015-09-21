@@ -52,7 +52,7 @@ static void tsc_operation_press
     drv_tsc_touch_state_st_ptr touch_pre_ptr
 )
 {
-    //osal_printf("x = %d,y = %d \n",touch_cur_ptr->coor_x,touch_cur_ptr->coor_y);
+    
 }
 
 
@@ -95,6 +95,18 @@ static void tsc_operation_release
         {
             /* Update road mode. */
             SysParam.vec_param.road_mode = (VEC_ROADMODE_INDEX_MAX <= SysParam.vec_param.road_mode)? VEC_ROADMODE_INDEX_MIN : SysParam.vec_param.road_mode + 1;
+
+            /* Set the active road mode. */
+            switch(SysParam.vec_param.road_mode)
+            {
+                case VEC_ROADMODE_HIGHWAY:  {  mode_change(2);  break;  }
+                case VEC_ROADMODE_MOUNTAIN: {  mode_change(3);  break;  }
+                case VEC_ROADMODE_CITY:     {  mode_change(4);  break;  }
+                default:                    {  break;                   }
+            }
+            
+            /* Reset system every time when change roadmode. */
+            NVIC_SystemReset();
         }
         else if( ((TSC_OBJCOOR_VECMODE_LDX <= touch_pre_ptr->coor_x) && (touch_pre_ptr->coor_x <= TSC_OBJCOOR_VECMODE_RUX))
               && ((TSC_OBJCOOR_VECMODE_LDY <= touch_pre_ptr->coor_y) && (touch_pre_ptr->coor_y <= TSC_OBJCOOR_VECMODE_RUY)) )
@@ -108,6 +120,17 @@ static void tsc_operation_release
             /* Update breakdown mode. */
             SysParam.vec_param.breakdown_mode = (VEC_BREAKDOWNMODE_INDEX_MAX <= SysParam.vec_param.breakdown_mode)? VEC_BREAKDOWNMODE_INDEX_MIN : SysParam.vec_param.breakdown_mode + 1;
         }
+        else
+        {
+            
+        }
+
+
+        
+    }
+    else if(SysParam.sys_mode == SYS_SYSMODE_ALARM)
+    {
+        ;
     }
 }
 

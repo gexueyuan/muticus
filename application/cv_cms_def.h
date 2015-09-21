@@ -131,9 +131,9 @@ enum HI_OUT_TYPE
     HI_OUT_GPS_CAPTURED,
     HI_OUT_GPS_LOST,
     
-    HI_OUT_CRD_ALERT,          /* 近距离 */
+    HI_OUT_CRD_ALERT,         /* 近距离 */
     HI_OUT_CRD_CANCEL,
-    HI_OUT_CRD_REAR_ALERT,
+    HI_OUT_CRD_REAR_ALERT,    /* 后方近距离 */
     HI_OUT_CRD_REAR_CANCEL,
     
     HI_OUT_VBD_ALERT,         /* 故障 */
@@ -179,27 +179,16 @@ typedef struct _sys_msg
     void      *argv;
 }sys_msg_t;
 
-/**
-    structure of system configure parameters 
-*/
+/** structure of system configure parameters. */
 typedef struct _cfg_param{
 
-    /*********************ID******************/	
-    uint8_t pid[RCP_TEMP_ID_LEN];  // ID 
+    uint8_t pid[RCP_TEMP_ID_LEN];
 
-    /******************** VAM *********************/
     vam_config_t vam;
-
-    /******************** VSA *********************/
     vsa_config_t vsa;
-
-    /**************************************************/
     gsnr_config_t gsnr;
-
-    /*********************WNET*************************/
     wnet_config_t wnet;
 
-    /******************** DBG *********************/
     uint8_t print_xxx;  /* 0 - disable, 1 - enable */
     
     /******************** AUDIO*********************/
@@ -318,8 +307,8 @@ static __inline float cv_ntohf(float f32)
 /*****************************************************************************
  * declare of global functions and variables                                 *
 *****************************************************************************/
-extern cms_global_t cms_envar, *p_cms_envar;
-extern cfg_param_t cms_param, *p_cms_param;
+extern cms_global_t cms_envar;
+extern cfg_param_t cms_param;
 
 osal_status_t sys_add_event_queue(sys_envar_t *p_sys, 
                              uint16_t msg_id, 

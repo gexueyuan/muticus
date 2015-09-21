@@ -166,7 +166,7 @@ static void ui_thread_entry
     ui_msg_st_ptr msg_ptr = NULL;
 
 
-    sys_envar_t *sys_envar_ptr = &p_cms_envar->sys;
+    sys_envar_t *sys_envar_ptr = &cms_envar.sys;
 
 
 

@@ -55,14 +55,10 @@ extern void mda_init(void);
 extern void voc_init(void);
 extern void cpu_usage_init(void);
 extern uint8_t IOE_Config(void);
-cms_global_t cms_envar, *p_cms_envar;
 
 
-void global_init(void)
-{
-    p_cms_envar = &cms_envar;
-    memset(p_cms_envar, 0, sizeof(cms_global_t));
-}
+cms_global_t cms_envar = { 0 };
+
 
 
 
@@ -88,7 +84,6 @@ void rt_init_thread_entry(void *parameter)
     drv_main_open();
 
     
-    global_init();
     param_init();
     //cpu_usage_init();    
     voc_init();    
@@ -115,7 +110,6 @@ void rt_init_thread_entry(void *parameter)
 
 void qc_init_entry(void *parameter)
 {
-    global_init();
     param_init();
     qc_run_init();
 }

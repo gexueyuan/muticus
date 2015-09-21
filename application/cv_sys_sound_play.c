@@ -35,14 +35,50 @@ static uint32_t phase = 0;
 #define VBD_VOC "[2]前方有故障车"  
 
 #define FRONT "前方"
+#define EEBL "急刹"
+#define VBD  "有故障车"
+#define CFCW "有慢车"
 #define MI "米"
 
 char  play_string[50];
 uint32_t voc_distance;
 
+
+char* itoa(int num,char*str,int radix)
+{
+    /*索引表*/
+    char index[]="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    unsigned unum;/*中间变量*/
+    int i=0,j,k;
+    /*确定unum的值*/
+    if(radix==10&&num<0)/*十进制负数*/
+    {
+    unum=(unsigned)-num;
+    str[i++]='-';
+    }
+    else unum=(unsigned)num;/*其他情况*/
+    /*转换*/
+    do{
+    str[i++]=index[unum%(unsigned)radix];
+    unum/=radix;
+    }while(unum);
+    str[i]='\0';
+    /*逆序*/
+    if(str[0]=='-')k=1;/*十进制负数*/
+    else k=0;
+    char temp;
+    for(j=k;j<=(i-1)/2;j++)
+    {
+    temp=str[j];
+    str[j]=str[i-1+k-j];
+    str[i-1+k-j]=temp;
+    }
+    return str;
+}
+
 static void sound_play_complete(void)
 {
-    sys_envar_t *p_sys = &p_cms_envar->sys;
+    sys_envar_t *p_sys = &cms_envar.sys;
     if (phase != 0) {
         /* Alert has been stopped. */
         osal_timer_change(p_sys->timer_voc, SOUND_PLAY_INTERVAL);
@@ -74,6 +110,7 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         strcpy(play_string,FRONT);
         strcat(play_string,(const char*)distance_char);// (const char*)itoa(voc_distance,distance_char,10));
         strcat(play_string,MI);
+        strcat(play_string,CFCW);
         osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
@@ -83,11 +120,23 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         break;
 
     case HI_OUT_VBD_ALERT:
-        data = VBD_VOC;
+        //data = VBD_VOC;
+        strcpy(play_string,FRONT);
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);
+        strcat(play_string,VBD);
+        osal_printf("string is %s\n",play_string);
+        data= play_string;
         break;
 
     case HI_OUT_EBD_ALERT:
-        data = EEBL_VOC;
+        //data = EEBL_VOC;
+        strcpy(play_string,FRONT);
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);
+        strcat(play_string,EEBL);
+        osal_printf("string is %s\n",play_string);
+        data= play_string;
         break;
     
     default:

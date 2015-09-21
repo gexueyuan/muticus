@@ -215,10 +215,11 @@ FINSH_FUNCTION_EXPORT(syn6288_continue, func:continue play audio);
 *****************************************************************************/
 void syn6288_volume(uint8_t vol)
 {
-    char vol_char[] = "[v1]";//{'[',vol,']'};
+    char vol_char[] = "[v01]";//{'[',vol,']'};
 
-    vol_char[2] = vol + 0x30;
-
+    vol_char[2] = vol/10 + 0x30;
+    vol_char[3] = vol%10 + 0x30;
+    
     syn6288_play(vol_char);
 
 }
@@ -300,13 +301,15 @@ FINSH_FUNCTION_EXPORT(play_test, sound test);
 
 void syn6288_set(uint8_t fg_vol,uint8_t bg_vol,uint8_t speed)
 {
-    char vol_char[] = "[d][v8][m2][t5]";//[d] global default;[v8] foreground vol is 8;
+    char vol_char[] = "[d][v08][m02][t5]";//[d] global default;[v8] foreground vol is 8;
 
-    vol_char[5] = fg_vol + 0x30;
+    vol_char[5] = fg_vol/10 + 0x30;
+    vol_char[6] = fg_vol%10 + 0x30;
 
-    vol_char[9] = bg_vol + 0x30;
+    vol_char[10] = bg_vol/10 + 0x30;
+    vol_char[11] = bg_vol/10 + 0x30;
     
-    vol_char[13] = speed + 0x30;
+    vol_char[15] = speed + 0x30;
 
     syn6288_play(vol_char);
 
@@ -317,7 +320,14 @@ void set_voc(void)
     /* load voc param from flash */
 	voc_config_t *p_voc_param = NULL;	
 
-    p_voc_param = &p_cms_param->voc;
+    p_voc_param = &cms_param.voc;
+
+    if(p_voc_param->fg_volume >= 16)
+        p_voc_param->fg_volume = 0;
+    if(p_voc_param->bg_volume >= 16)
+        p_voc_param->bg_volume = 0;
+    if(p_voc_param->bg_volume >= 5)
+        p_voc_param->speed = 5;
     
     syn6288_set(p_voc_param->fg_volume,p_voc_param->bg_volume,p_voc_param->speed);
 }

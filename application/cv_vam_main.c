@@ -219,33 +219,41 @@ int vam_add_event_queue_2(vam_envar_t *p_vam, void *p_msg)
 void vam_init(void)
 {
     int i;
-    vam_envar_t *p_vam = &p_cms_envar->vam;
+    vam_envar_t *p_vam = &cms_envar.vam;
     uint8_t zero_pid[RCP_TEMP_ID_LEN] = {0};
 
     p_vam_envar = p_vam;
 
     
     memset(p_vam, 0, sizeof(vam_envar_t));
-    memcpy(&p_vam->working_param, &p_cms_param->vam, sizeof(vam_config_t));
-    if (0 == memcmp(p_cms_param->pid, zero_pid, RCP_TEMP_ID_LEN)){
+    memcpy(&p_vam->working_param, &cms_param.vam, sizeof(vam_config_t));
+    if (0 == memcmp(cms_param.pid, zero_pid, RCP_TEMP_ID_LEN)){
         for (i=0; i<RCP_TEMP_ID_LEN; i++){
             p_vam->local.pid[i] = des(RCP_TEMP_ID_LEN-1-i);
         }
     }
     else {
-        memcpy(p_vam->local.pid, p_cms_param->pid, RCP_TEMP_ID_LEN);
+        memcpy(p_vam->local.pid, cms_param.pid, RCP_TEMP_ID_LEN);
     }
 
     
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "PID: %02x %02x %02x %02x\r\n", \
                                            p_vam->local.pid[0], p_vam->local.pid[1], p_vam->local.pid[2], p_vam->local.pid[3]);
 
+    /* Initial neibhour list head and free list head structure. */
     INIT_LIST_HEAD(&p_vam->neighbour_list);
     INIT_LIST_HEAD(&p_vam->sta_free_list);
+
+    /* Initial list semaphore. */
+    p_vam->sem_sta = osal_sem_create("s-sta", 1);
+    osal_assert(p_vam->sem_sta != RT_NULL);
+
+    /* Add all the list node to free list. */
     for(i = 0; i< VAM_NEIGHBOUR_MAXNUM; i++)
     {
         list_add_tail(&p_vam->remote[i].list, &p_vam->sta_free_list);
     }
+
 
      /* os object for vam */
     p_vam->queue_vam = osal_queue_create("q-vam", VAM_QUEUE_SIZE);
@@ -272,8 +280,7 @@ void vam_init(void)
     p_vam->timer_neighbour_life = osal_timer_create("tm-nl", timer_neigh_time_callback, p_vam, NEIGHBOUR_LIFE_ACCUR, RT_TIMER_FLAG_PERIODIC); 					
     osal_assert(p_vam->timer_neighbour_life != RT_NULL);
 
-    p_vam->sem_sta = osal_sem_create("s-sta", 1);
-    osal_assert(p_vam->sem_sta != RT_NULL);
+
 
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "module initial\n");
 }

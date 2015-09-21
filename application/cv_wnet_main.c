@@ -103,11 +103,11 @@ void wnet_init(void)
     int i;
     
     wnet_envar_t *p_wnet;
-    p_wnet_envar = &p_cms_envar->wnet;
+    p_wnet_envar = &cms_envar.wnet;
     p_wnet = p_wnet_envar;
 
     memset(p_wnet, 0, WNET_ENVAR_T_LEN);
-    memcpy(&p_wnet->working_param, &p_cms_param->wnet, WNET_CONFIG_T_LEN);
+    memcpy(&p_wnet->working_param, &cms_param.wnet, WNET_CONFIG_T_LEN);
 
 
     /* Initialize the txbuf queue. */

@@ -125,7 +125,7 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 {
     uint32_t type = 0; 
     static uint8_t keycnt = 0xff;
-    vsa_envar_t *p_vsa = &p_cms_envar->vsa;
+    vsa_envar_t *p_vsa = &cms_envar.vsa;
     
     switch(p_msg->id)
     {
@@ -166,7 +166,7 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         else if (p_msg->argc == VSA_ID_EBD){
             type = HI_OUT_EBD_ALERT;
         }  
-        hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,0,type, 0);
+        hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,p_msg->len,type, 0);
         break;
         
     case SYS_MSG_STOP_ALERT:
@@ -274,7 +274,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_CRD_ALERT:
         {
-            sound_alert_start(HI_OUT_CRD_ALERT,100);
+            sound_alert_start(HI_OUT_CRD_ALERT,p_msg->len);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CFCW alert start!!\n\n");
             if(p_sys->status&(1<<HI_OUT_CRD_ALERT))
             {
@@ -300,7 +300,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_VBD_ALERT:  
 
-            sound_alert_start(HI_OUT_VBD_ALERT,100);
+            sound_alert_start(HI_OUT_VBD_ALERT,p_msg->len);
             if(p_sys->status&(1<<HI_OUT_VBD_ALERT)){
                 return;
             }
@@ -471,7 +471,7 @@ void rt_hi_thread_entry(void *parameter)
 
 void sys_init(void)
 {
-    sys_envar_t *p_sys = &p_cms_envar->sys;
+    sys_envar_t *p_sys = &cms_envar.sys;
     /* object for sys */
     p_sys->queue_sys_mng = osal_queue_create("q-sys", SYS_QUEUE_SIZE);
     osal_assert(p_sys->queue_sys_mng != NULL);

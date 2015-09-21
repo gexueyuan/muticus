@@ -34,7 +34,7 @@
 int32_t vam_start(void)
 {
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "%s: --->\n", __FUNCTION__);
-    vam_add_event_queue(&p_cms_envar->vam, VAM_MSG_START, 0, 0, 0);
+    vam_add_event_queue(&cms_envar.vam, VAM_MSG_START, 0, 0, 0);
     return 0;
 }
 FINSH_FUNCTION_EXPORT(vam_start, vam module start);
@@ -42,7 +42,7 @@ FINSH_FUNCTION_EXPORT(vam_start, vam module start);
 int32_t vam_stop(void)
 {
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "%s: --->\n", __FUNCTION__);
-    vam_add_event_queue(&p_cms_envar->vam, VAM_MSG_STOP, 0, 0, 0);
+    vam_add_event_queue(&cms_envar.vam, VAM_MSG_STOP, 0, 0, 0);
     return 0;
 }
 FINSH_FUNCTION_EXPORT(vam_stop, vam module stop);
@@ -139,8 +139,10 @@ int32_t vam_get_all_peer_pid(uint8_t pid[][RCP_TEMP_ID_LEN], uint32_t maxitem, u
 
     
     osal_sem_take(p_vam->sem_sta, RT_WAITING_FOREVER);
-	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list){
-        if (count < maxitem){
+	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list)
+    {
+        if (count < maxitem)
+        {
             memcpy(pid[count], p_sta->s.pid, RCP_TEMP_ID_LEN);           
         }
         count++;
@@ -206,8 +208,10 @@ int32_t vam_get_peer_current_status(uint8_t *pid, vam_stastatus_t *local)
     
     osal_sem_take(p_vam->sem_sta, RT_WAITING_FOREVER);
 
-	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list){
-        if (memcmp(p_sta->s.pid, pid, RCP_TEMP_ID_LEN)==0){
+	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list)
+    {
+        if (memcmp(p_sta->s.pid, pid, RCP_TEMP_ID_LEN)==0)
+        {
             vsm_get_dr_current(&p_sta->s, local);
             break;
         }

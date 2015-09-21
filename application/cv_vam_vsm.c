@@ -369,7 +369,7 @@ void timer_neigh_time_callback(void* parameter)
 
 void vam_list_sta(void)
 {
-    vam_envar_t *p_vam = &p_cms_envar->vam;
+    vam_envar_t *p_vam = &cms_envar.vam;
     vam_sta_node_t *p_sta = NULL;
     int i = 0;
 
