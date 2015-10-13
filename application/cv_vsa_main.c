@@ -681,7 +681,7 @@ static int ebd_judge(vsa_envar_t *p_vsa)
 static int vbd_judge(vsa_envar_t *p_vsa)
 {
     
-#if 0
+#if 1
     vsa_position_node_t *p_node;    
     int32_t dis_actual;
     p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);

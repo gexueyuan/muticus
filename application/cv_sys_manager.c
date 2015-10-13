@@ -289,7 +289,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 
         case HI_OUT_CRD_REAR_ALERT:            
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CRCW alert start!!\n\n");
-            sound_alert_start(HI_OUT_CRD_REAR_ALERT,100);
+            sound_alert_start(HI_OUT_CRD_REAR_ALERT,p_msg->len);
             if(p_sys->status&(1<<HI_OUT_CRD_REAR_ALERT)){
                 return;
             }

@@ -219,14 +219,14 @@ FINSH_FUNCTION_EXPORT(dump, printf the raw data);
 /* BEGIN: Added by wanglei, 2015/5/12 */
 void dbg_print(int type)
 {
-    if (type < 0 || type > 3){
+    if (type < 0 || type > 4){
         return;
     }
     else{
         g_dbg_print_type = type;
     }
 }
-FINSH_FUNCTION_EXPORT(dbg_print, 0-disable 1-print wnet rxtx 2-print peer status 3-both);
+FINSH_FUNCTION_EXPORT(dbg_print, 0-disable 1-print wnet rxtx 2-print peer status 3-both 4-gps);
 /* END:   Added by wanglei, 2015/5/12 */
 
 #endif /* OS_RT_THREAD */

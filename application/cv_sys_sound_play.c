@@ -20,8 +20,8 @@
 
 
 
-#define SOUND_PLAY_INTERVAL MS_TO_TICK(200)
-#define BIBI_PRE_COUNT 3
+#define SOUND_PLAY_INTERVAL MS_TO_TICK(50)
+#define BIBI_PRE_COUNT 1
 #define MAX_VOICE  6  /* MUST BE such value as 2,4,8,16... */
 static uint8_t voice[MAX_VOICE];
 static uint32_t voice_wr_idx;
@@ -36,8 +36,8 @@ static uint32_t phase = 0;
 
 #define FRONT "前方"
 #define EEBL "急刹"
-#define VBD  "有故障车"
-#define CFCW "有慢车"
+#define VBD  "故障"
+#define CFCW "车距"
 #define MI "米"
 
 char  play_string[50];
@@ -107,11 +107,11 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     case HI_OUT_CRD_ALERT:
         //data = CFCW_VOC;
         sprintf(distance_char,"%d", voc_distance);
-        strcpy(play_string,FRONT);
+        strcpy(play_string,FRONT);     
+        strcat(play_string,CFCW);
         strcat(play_string,(const char*)distance_char);// (const char*)itoa(voc_distance,distance_char,10));
         strcat(play_string,MI);
-        strcat(play_string,CFCW);
-        osal_printf("string is %s\n",play_string);
+        //osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
 
@@ -125,7 +125,7 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
         strcat(play_string,MI);
         strcat(play_string,VBD);
-        osal_printf("string is %s\n",play_string);
+        //osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
 
@@ -135,7 +135,7 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
         strcat(play_string,MI);
         strcat(play_string,EEBL);
-        osal_printf("string is %s\n",play_string);
+        //osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
     
