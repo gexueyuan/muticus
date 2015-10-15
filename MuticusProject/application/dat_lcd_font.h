@@ -30,6 +30,7 @@ extern const drv_lcd_plane_st PicFontGroup[];
 #define PIC_FONT_INDEX_ASCII_12X12    0x0001
 #define PIC_FONT_INDEX_ASCII_8X12     0x0002
 #define PIC_FONT_INDEX_ASCII_8X8      0x0003
+#define PIC_FONT_INDEX_ASCII_6X12     0x0004
 
 
 

@@ -25,7 +25,7 @@ OSAL_DEBUG_ENTRY_DEFINE(sysc)
 #include "cv_cms_def.h"
 
 #include "led.h"
-#include "key.h"
+#include "cv_drv_key.h"
 #include "cv_vsa.h"
 
 #include "app_interface.h"
@@ -60,6 +60,9 @@ extern int param_set(uint8_t param, int32_t value);
 
 extern void syn6288_play(char *txt);
 extern void set_voc(void);
+extern void sound_alert_start(uint32_t alert_type,uint32_t distance);
+extern void sound_alert_stop(void);
+
 /*****************************************************************************
  * implementation of functions                                               *
 *****************************************************************************/
@@ -72,20 +75,22 @@ osal_status_t sys_add_event_queue(sys_envar_t *p_sys,
                              void    *msg_argv)
 {
     int err = OSAL_STATUS_NOMEM;
-    sys_msg_t *p_msg;
+    sys_msg_st *p_msg;
 
-    p_msg = osal_malloc(sizeof(sys_msg_t));
-    if (p_msg) {
+    p_msg = osal_malloc(sizeof(sys_msg_st));
+    if (p_msg) 
+    {
         p_msg->id = msg_id;
         p_msg->len = msg_len;
         p_msg->argc = msg_argc;
         p_msg->argv = msg_argv;
+        
         err = osal_queue_send(p_sys->queue_sys_mng, p_msg);
     }
 
-    if (err != OSAL_STATUS_SUCCESS) {
-        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n",\
-                           __FUNCTION__, err, msg_id);
+    if (err != OSAL_STATUS_SUCCESS) 
+    {
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n", __FUNCTION__, err, msg_id);
         osal_free(p_msg);                   
     }
 
@@ -99,8 +104,8 @@ osal_status_t hi_add_event_queue(sys_envar_t *p_sys,
                              void    *msg_argv)
 {
     osal_status_t err = OSAL_STATUS_NOMEM;
-    sys_msg_t *hi_msg;
-    hi_msg = osal_malloc(sizeof(sys_msg_t));
+    sys_msg_st *hi_msg;
+    hi_msg = osal_malloc(sizeof(sys_msg_st));
     if (hi_msg) {
         hi_msg->id = msg_id;
         hi_msg->len = msg_len;
@@ -118,11 +123,12 @@ osal_status_t hi_add_event_queue(sys_envar_t *p_sys,
     return err;
 }
 
-void sys_manage_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
+void sys_manage_proc(sys_envar_t *p_sys, sys_msg_st *p_msg)
 {
-    uint32_t type = 0; 
+    uint32_t         type = 0; 
     static uint8_t keycnt = 0xff;
-    vsa_envar_t *p_vsa = &cms_envar.vsa;
+    vsa_envar_t    *p_vsa = &cms_envar.vsa;
+
     
     switch(p_msg->id)
     {
@@ -134,20 +140,25 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,0,HI_OUT_SYS_INIT, 0);
             break;
         }
-    case SYS_MSG_BSM_UPDATE:
+        case SYS_MSG_BSM_UPDATE:
         hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,0,p_msg->argc, 0);            
         break;
         
-    case SYS_MSG_KEY_PRESSED:
-        if(p_msg->argc == C_UP_KEY){   
-            //rt_kprintf("gsnr param is resetting .....\n");
-            //param_set(19,0);                   
-         }
-        else if(p_msg->argc == C_DOWN_KEY){
-            vsa_add_event_queue(p_vsa, VSA_MSG_MANUAL_BC, 0,keycnt,NULL);
-            keycnt = ~keycnt;                 
+        case SYS_MSG_KEY_PRESSED:
+        {
+            if(p_msg->argc == C_UP_KEY)
+            {   
+                //rt_kprintf("gsnr param is resetting .....\n");
+                //param_set(19,0);                   
+            }
+            else if(p_msg->argc == C_DOWN_KEY)
+            {
+                vsa_add_event_queue(p_vsa, VSA_MSG_MANUAL_BC, 0, keycnt, NULL);
+                keycnt = ~keycnt;
+            }
+
+            break;
         }
-        break;
     case SYS_MSG_START_ALERT:
         OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_TRACE, "%s:alert start!!!.\n", __FUNCTION__);
 
@@ -163,7 +174,7 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         else if (p_msg->argc == VSA_ID_EBD){
             type = HI_OUT_EBD_ALERT;
         }  
-        hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,0,type, 0);
+        hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,p_msg->len,type, 0);
         break;
         
     case SYS_MSG_STOP_ALERT:
@@ -219,7 +230,7 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 void sysc_thread_entry(void *parameter)
 {
     int err;
-    sys_msg_t *p_msg;
+    sys_msg_st *p_msg;
     sys_envar_t *p_sys = (sys_envar_t *)parameter;
 
     while(1)
@@ -238,7 +249,7 @@ void sysc_thread_entry(void *parameter)
 }
 
 
-void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
+void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_st *p_msg)
 {
     Led_Color led_color;
     Led_State led_state;
@@ -271,7 +282,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_CRD_ALERT:
         {
-            //sound_alert_start(HI_OUT_CRD_ALERT);
+            sound_alert_start(HI_OUT_CRD_ALERT,p_msg->len);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CFCW alert start!!\n\n");
             if(p_sys->status&(1<<HI_OUT_CRD_ALERT))
             {
@@ -286,7 +297,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 
         case HI_OUT_CRD_REAR_ALERT:            
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CRCW alert start!!\n\n");
-            //sound_alert_start(HI_OUT_CRD_REAR_ALERT);
+            sound_alert_start(HI_OUT_CRD_REAR_ALERT,p_msg->len);
             if(p_sys->status&(1<<HI_OUT_CRD_REAR_ALERT)){
                 return;
             }
@@ -297,7 +308,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_VBD_ALERT:  
 
-            //sound_alert_start(HI_OUT_VBD_ALERT);
+            sound_alert_start(HI_OUT_VBD_ALERT,p_msg->len);
             if(p_sys->status&(1<<HI_OUT_VBD_ALERT)){
                 return;
             }
@@ -309,7 +320,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 
         case HI_OUT_EBD_ALERT:
            
-            //sound_alert_start(HI_OUT_EBD_ALERT);
+            sound_alert_start(HI_OUT_EBD_ALERT,p_msg->len);
             if(p_sys->status&(1<<HI_OUT_EBD_ALERT)){
                 return;
             }
@@ -322,7 +333,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_CRD_CANCEL:
             
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_CRD_ALERT);               
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CFCW  alert cancel!!\n\n");
@@ -332,7 +343,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_CRD_REAR_CANCEL:
             
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_CRD_REAR_ALERT);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI CRCW alert cancel!!\n\n");
@@ -342,7 +353,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_VBD_CANCEL:
 
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_VBD_ALERT);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI vbd alert cancel!!\n\n");
@@ -351,7 +362,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
         case HI_OUT_EBD_CANCEL://cancel alarm
        
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~(1<<HI_OUT_EBD_ALERT);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI EEBL alert  cancel!!\n\n");
@@ -374,7 +385,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
             
         case HI_OUT_CANCEL_ALERT:
             if(alarm_state == 0) {
-                //sound_alert_stop();
+                sound_alert_stop();
             }
             p_sys->status &= ~((1<<HI_OUT_EBD_ALERT)|(1<<HI_OUT_VBD_ALERT)|(1<<HI_OUT_CRD_ALERT));
             break;
@@ -445,7 +456,7 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_t *p_msg)
 void rt_hi_thread_entry(void *parameter)
 {
     osal_status_t err;
-    sys_msg_t msg, *p_msg = &msg;
+    sys_msg_st msg, *p_msg = &msg;
     sys_envar_t *p_sys = (sys_envar_t *)parameter;
 
 

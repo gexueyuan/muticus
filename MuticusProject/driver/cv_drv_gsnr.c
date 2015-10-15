@@ -21,7 +21,7 @@
 #include <math.h>
 #include "gsensor.h"
 #include "gps.h"
-
+#include "cv_drv_key.h"
 #include "bma250e.h"
 
 static gsnr_log_level_t gsnr_log_lvl = GSNR_NOTICE;
@@ -72,7 +72,7 @@ static void printAcc(gsnr_log_level_t level, char *des, float x, float y, float 
 void GsensorReadAcc(float* pfData)
 {
     gsnr_get_acc(pfData);
-    printAcc(GSNR_NOTICE, "raw_xyz", pfData[0], pfData[1], pfData[2]);    
+    printAcc(GSNR_DEBUG, "raw_xyz", pfData[0], pfData[1], pfData[2]);    
 
     g_info.x = pfData[0];
     g_info.y = pfData[1];
@@ -385,7 +385,7 @@ void AcceDetect(float acce_ahead, float acce_k, float acce_k_x)
         if(0 == key_press)
         {
             printAcc(GSNR_INFO, "翻转xyz",acce_ahead, acce_k, acce_k_x);
-            sys_add_event_queue(p_sys,SYS_MSG_KEY_PRESSED,0,2,NULL);		
+            sys_add_event_queue(p_sys, SYS_MSG_KEY_PRESSED, 0, C_DOWN_KEY, NULL);		
             key_press = 1;
         }
     }
@@ -394,7 +394,7 @@ void AcceDetect(float acce_ahead, float acce_k, float acce_k_x)
         if(key_press == 1)
         {
             printAcc(GSNR_INFO, "翻转xyz",acce_ahead, acce_k, acce_k_x);
-            sys_add_event_queue(p_sys,SYS_MSG_KEY_PRESSED,0,2,NULL);			
+            sys_add_event_queue(p_sys, SYS_MSG_KEY_PRESSED, 0, C_DOWN_KEY, NULL);			
             key_press = 0;
         }
     }
@@ -467,34 +467,39 @@ uint8_t GsensorDataRead(gsnr_config_t *p_gsnr)
 
 static void gsnr_thread_entry(void *parameter)
 {
-	float   pfData[3]={0};
+    float   pfData[3]={0};
+
+    
     GsensorReadAcc(pfData);
-	while(1) {
+    while(1) 
+    {
         GsensorReadAcc(pfData);
-		if(drivint_step == 0)
-		{
-	    	if(GetStaticVal(g_info) == 1)
-	    	{
+    	if(drivint_step == 0)
+    	{
+        	if(GetStaticVal(g_info) == 1)
+        	{
         		drivint_step = 1;	  //已确定重力加速度方向
                 GsensorDataSave(drivint_step, Acce_V, Acce_Ahead);
-	    	}
+        	}
             
-		}
-		else if(drivint_step == 1)
-		{
+    	}
+    	else if(drivint_step == 1)
+    	{
     		if(RecDirection(g_info) == 1)
     		{
                 drivint_step = 2;	  //已确定车头方向
                 GsensorDataSave(drivint_step, Acce_V, Acce_Ahead);
     		}
-		}
-		else if(drivint_step == 2)
-		{
-			AcceHandle(g_info);
-		}
+    	}
+    	else if(drivint_step == 2)
+    	{
+    		AcceHandle(g_info);
+    	}
+        
         osal_delay(GSNR_POLL_TIME_INTERVAL);
     } 
 }
+
 
 void gsnr_init()
 {
@@ -518,9 +523,7 @@ void gsnr_init()
 
     drivint_step = GsensorDataRead(p_gsnr_param);
        
-    gsnr_thread = osal_task_create("t-gsnr",
-                                    gsnr_thread_entry, RT_NULL,
-                                    RT_MEMS_THREAD_STACK_SIZE, RT_MEMS_THREAD_PRIORITY);
+    gsnr_thread = osal_task_create("t-gsnr", gsnr_thread_entry, RT_NULL, RT_MEMS_THREAD_STACK_SIZE, RT_MEMS_THREAD_PRIORITY);
     osal_assert(gsnr_thread != RT_NULL) 
 }
 

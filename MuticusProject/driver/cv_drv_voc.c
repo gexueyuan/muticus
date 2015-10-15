@@ -204,7 +204,7 @@ void rt_play_thread_entry(void *parameter)
             }
             if(VOC_STATUS_TST(VOC_STATUS_PLAYING)){
                 
-                osal_printf("out put string is %s\n",session->src_data);
+                //osal_printf("out put string is %s\n",session->src_data);
                 syn6288_play(session->src_data);
                 }
                       

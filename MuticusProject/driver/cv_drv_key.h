@@ -4,37 +4,6 @@
 #include <board.h>
 
 
-#ifdef HARDWARE_MODULE_WIFI_V1
-
-#define KEY0_PIN                GPIO_Pin_9  
-#define KEY0_GPIO_PORT          GPIOB      
-#define KEY0_GPIO_CLK           RCC_AHB1Periph_GPIOB
-
-
-#define KEY1_PIN                GPIO_Pin_9  
-#define KEY1_GPIO_PORT          GPIOC      
-#define KEY1_GPIO_CLK           RCC_AHB1Periph_GPIOC
-
-#define KEY2_PIN                GPIO_Pin_2  
-#define KEY2_GPIO_PORT          GPIOC      
-#define KEY2_GPIO_CLK           RCC_AHB1Periph_GPIOC
-
-#define key_up_GETVALUE()       GPIO_ReadInputDataBit(KEY0_GPIO_PORT, KEY0_PIN)
-#define key_down_GETVALUE()     GPIO_ReadInputDataBit(KEY1_GPIO_PORT, KEY1_PIN)
-#define key_third_GETVALUE()    GPIO_ReadInputDataBit(KEY2_GPIO_PORT, KEY2_PIN)
-
-
-#elif defined (HARDWARE_MODULE_WIFI_V2)
-
-#define KEY0_PIN                GPIO_Pin_7  
-#define KEY0_GPIO_PORT          GPIOC      
-#define KEY0_GPIO_CLK           RCC_AHB1Periph_GPIOC
-
-#define key_up_GETVALUE()       GPIO_ReadInputDataBit(KEY0_GPIO_PORT, KEY0_PIN)
-#define key_down_GETVALUE()     1
-#define key_third_GETVALUE()    1 
-
-#elif defined (HARDWARE_MODULE_WIFI_V3)
 #define KEY0_PIN                GPIO_Pin_4  
 #define KEY0_GPIO_PORT          GPIOD      
 #define KEY0_GPIO_CLK           RCC_AHB1Periph_GPIOD
@@ -42,12 +11,6 @@
 #define key_up_GETVALUE()       GPIO_ReadInputDataBit(KEY0_GPIO_PORT, KEY0_PIN)
 #define key_down_GETVALUE()     1
 #define key_third_GETVALUE()    1 
-
-#else
-
-#error "HARDWARE version  not  define!!"
-
-#endif
 
 
 
@@ -84,7 +47,7 @@
 #define  C_HOME_KEY 			C_SPECIAL_KEY+0x44
 
 
-
+static struct rtgui_key *key;
 
 extern int32_t vam_active_alert(uint16_t alert);
 extern int32_t vam_cancel_alert(uint16_t alert);

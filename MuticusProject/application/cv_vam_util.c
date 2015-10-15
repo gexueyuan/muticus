@@ -420,8 +420,7 @@ int32_t vsm_get_dr_current(vam_stastatus_t *last, vam_stastatus_t *current)
         return -1;
     }
 
-    deltaT = ((t>=last->time) ? (t-last->time) : \
-             (t+RT_UINT32_MAX - last->time)) / 1000.0f;
+    deltaT = ((t >= last->time) ? (t - last->time) : (t + RT_UINT32_MAX - last->time)) / 1000.0f;
 
     memcpy(current, last, sizeof(vam_stastatus_t));
     if(deltaT <= 20 || (last->speed < 10))
@@ -436,7 +435,7 @@ int32_t vsm_get_dr_current(vam_stastatus_t *last, vam_stastatus_t *current)
     
     /* uniform rectilinear motion */ 
     v = last->speed / 3.6f;
-    s = v*deltaT; 
+    s = v * deltaT; 
     
 	/* lat2 = asin( sin lat1 * cos dR + cos lat1 * sin dR * cos ¦È )
     lon2 = lon1 + atan2( sin ¦È * sin dR * cos lat1, cos dR- sin lat1 * sin lat2 )

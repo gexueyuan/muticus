@@ -225,8 +225,9 @@ typedef struct _vam_envar
     vam_stastatus_t local;
     vam_sta_node_t remote[VAM_NEIGHBOUR_MAXNUM];
 
-    list_head_t sta_free_list;
+    list_head_t  sta_free_list;
     list_head_t neighbour_list;
+    osal_sem_t        *sem_sta;
 
     vam_evt_handler evt_handler[VAM_EVT_MAX];
 
@@ -241,8 +242,6 @@ typedef struct _vam_envar
     osal_timer_t *timer_neighbour_life;
 
     osal_timer_t *timer_send_rsa;
-
-    osal_sem_t *sem_sta;
 
 }vam_envar_t;
 

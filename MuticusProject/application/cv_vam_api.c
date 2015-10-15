@@ -139,8 +139,10 @@ int32_t vam_get_all_peer_pid(uint8_t pid[][RCP_TEMP_ID_LEN], uint32_t maxitem, u
 
     
     osal_sem_take(p_vam->sem_sta, RT_WAITING_FOREVER);
-	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list){
-        if (count < maxitem){
+	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list)
+    {
+        if (count < maxitem)
+        {
             memcpy(pid[count], p_sta->s.pid, RCP_TEMP_ID_LEN);           
         }
         count++;
@@ -206,8 +208,10 @@ int32_t vam_get_peer_current_status(uint8_t *pid, vam_stastatus_t *local)
     
     osal_sem_take(p_vam->sem_sta, RT_WAITING_FOREVER);
 
-	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list){
-        if (memcmp(p_sta->s.pid, pid, RCP_TEMP_ID_LEN)==0){
+	list_for_each_entry(p_sta, vam_sta_node_t, &p_vam->neighbour_list, list)
+    {
+        if (memcmp(p_sta->s.pid, pid, RCP_TEMP_ID_LEN)==0)
+        {
             vsm_get_dr_current(&p_sta->s, local);
             break;
         }

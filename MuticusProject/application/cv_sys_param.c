@@ -51,7 +51,7 @@ void load_default_param_custom(cfg_param_t *param)
     memset(param, 0 , sizeof(cfg_param_t));
     /******************** VAM *********************/
     param->vam.bsm_hops = 1; 
-    param->vam.bsm_boardcast_mode = 1;  /* 0 - disable, 1 - auto, 2 - fixed period */
+    param->vam.bsm_boardcast_mode = 2;  /* 0 - disable, 1 - auto, 2 - fixed period */
     param->vam.bsm_boardcast_saftyfactor = 5;  /* 1~10 */
     param->vam.bsm_pause_mode = 1;  /* 0 - disable, 1 - enable */
     param->vam.bsm_pause_hold_time = 5;  /* unit:s */
@@ -91,7 +91,7 @@ void load_default_param_custom(cfg_param_t *param)
 
     param->voc.fg_volume = 8;
     param->voc.bg_volume = 4;
-    param->voc.speed = 4;
+    param->voc.speed = 5;
 
 }
 
@@ -102,7 +102,7 @@ void load_default_param_highway(cfg_param_t *param)
 
     /******************** VAM *********************/
     param->vam.bsm_hops = 1; 
-    param->vam.bsm_boardcast_mode = 1;  /* 0 - disable, 1 - auto, 2 - fixed period */
+    param->vam.bsm_boardcast_mode = 2;  /* 0 - disable, 1 - auto, 2 - fixed period */
     param->vam.bsm_boardcast_saftyfactor = 5;  /* 1~10 */
     param->vam.bsm_pause_mode = 1;  /* 0 - disable, 1 - enable */
     param->vam.bsm_pause_hold_time = 5;  /* unit:s */
@@ -142,7 +142,7 @@ void load_default_param_highway(cfg_param_t *param)
 
     param->voc.fg_volume = 8;
     param->voc.bg_volume = 4;
-    param->voc.speed = 4;
+    param->voc.speed = 5;
     
 
 }
@@ -154,7 +154,7 @@ void load_default_param_mountain(cfg_param_t *param)
 
     /******************** VAM *********************/
     param->vam.bsm_hops = 1; 
-    param->vam.bsm_boardcast_mode = 1;  /* 0 - disable, 1 - auto, 2 - fixed period */
+    param->vam.bsm_boardcast_mode = 2;  /* 0 - disable, 1 - auto, 2 - fixed period */
     param->vam.bsm_boardcast_saftyfactor = 5;  /* 1~10 */
     param->vam.bsm_pause_mode = 1;  /* 0 - disable, 1 - enable */
     param->vam.bsm_pause_hold_time = 5;  /* unit:s */
@@ -194,7 +194,7 @@ void load_default_param_mountain(cfg_param_t *param)
 
     param->voc.fg_volume = 8;
     param->voc.bg_volume = 4;
-    param->voc.speed = 4;
+    param->voc.speed = 5;
     
 
 }
@@ -205,7 +205,7 @@ void load_default_param_city(cfg_param_t *param)
 
     /******************** VAM *********************/
     param->vam.bsm_hops = 1; 
-    param->vam.bsm_boardcast_mode = 1;  /* 0 - disable, 1 - auto, 2 - fixed period */
+    param->vam.bsm_boardcast_mode = 2;  /* 0 - disable, 1 - auto, 2 - fixed period */
     param->vam.bsm_boardcast_saftyfactor = 5;  /* 1~10 */
     param->vam.bsm_pause_mode = 1;  /* 0 - disable, 1 - enable */
     param->vam.bsm_pause_hold_time = 5;  /* unit:s */
@@ -245,7 +245,7 @@ void load_default_param_city(cfg_param_t *param)
 
     param->voc.fg_volume = 8;
     param->voc.bg_volume = 4;
-    param->voc.speed = 4;
+    param->voc.speed = 5;
     
 
 }
@@ -261,7 +261,7 @@ void load_default_param(cfg_param_t *param)
     param->pid[3] = 0x00;
     /******************** VAM *********************/
     param->vam.bsm_hops = 1; 
-    param->vam.bsm_boardcast_mode = 1;  /* 0 - disable, 1 - auto, 2 - fixed period */
+    param->vam.bsm_boardcast_mode = 2;  /* 0 - disable, 1 - auto, 2 - fixed period */
     param->vam.bsm_boardcast_saftyfactor = 5;  /* 1~10 */
     param->vam.bsm_pause_mode = 1;  /* 0 - disable, 1 - enable */
     param->vam.bsm_pause_hold_time = 5;  /* unit:s */
@@ -301,7 +301,7 @@ void load_default_param(cfg_param_t *param)
 
     param->voc.fg_volume = 8;
     param->voc.bg_volume = 4;
-    param->voc.speed = 4;
+    param->voc.speed = 5;
     
 
 }

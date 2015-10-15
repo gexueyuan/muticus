@@ -116,20 +116,25 @@ void timer_send_bsm_callback(void* parameter)
     vam_envar_t *p_vam = (vam_envar_t *)parameter;
 
     static uint8_t count = VAM_NO_ALERT_EVAM_TX_TIMES;
-    if (p_vam->flag&VAM_FLAG_TX_BSM_ALERT){
+    if (p_vam->flag & VAM_FLAG_TX_BSM_ALERT)
+    {
         /* 所有alter已取消 */
-        if (p_vam->local.alert_mask == 0){
+        if (p_vam->local.alert_mask == 0)
+        {
             /* 发送VAM_NO_ALERT_EVAM_TX_TIMES次后停止发送bsm alter消息数据 */
-            if (0 == count--){
+            if (0 == count--)
+            {
                 p_vam->flag &= ~VAM_FLAG_TX_BSM_ALERT;
             }
         }
-        else{
+        else
+        {
             count = VAM_NO_ALERT_EVAM_TX_TIMES;
         }
     }
 
-    if ((p_vam->flag&VAM_FLAG_TX_BSM)&&(!(p_vam->flag&VAM_FLAG_TX_BSM_PAUSE))){
+    if ((p_vam->flag&VAM_FLAG_TX_BSM)&&(!(p_vam->flag&VAM_FLAG_TX_BSM_PAUSE)))
+    {
         #ifdef RSU_TEST
         vam_add_event_queue(p_vam, VAM_MSG_RCPTX, 0, RCP_MSG_ID_RSA, NULL);
         #else

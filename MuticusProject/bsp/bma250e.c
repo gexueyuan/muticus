@@ -13,17 +13,10 @@
 #include "bma250e.h"
 #include "gsensor.h"
 
-/** @defgroup STM32F401_DISCOVERY_BMA250E_Private_Variables
-  * @{
-  */
-__IO uint32_t  BMA250ETimeout = BMA250E_FLAG_TIMEOUT;
-/**
-  * @}
-  */
 
-/** @defgroup STM32F401_DISCOVERY_BMA250E_Private_FunctionPrototypes
-  * @{
-  */
+__IO uint32_t  BMA250ETimeout = BMA250E_FLAG_TIMEOUT;
+
+
 static uint8_t BMA250E_SendByte(uint8_t byte);
 
 
@@ -62,6 +55,7 @@ void BMA250E_Write(uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite)
   BMA250E_CS_HIGH();
 }
 
+
 /**
   * @brief  Reads a block of data from the BMA250E.
   * @param  pBuffer : pointer to the buffer that receives the data read from the BMA250E.
@@ -97,6 +91,8 @@ void BMA250E_Read(uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead)
   /* Set chip select High at the end of the transmission */
   BMA250E_CS_HIGH();
 }
+
+
 /**
   * @brief  Initializes the low level interface used to drive the BMA250E
   * @param  None
@@ -104,87 +100,83 @@ void BMA250E_Read(uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead)
   */
 void BMA250E_LowLevel_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStructure;
-  SPI_InitTypeDef  SPI_InitStructure;
+    GPIO_InitTypeDef GPIO_InitStructure;
+    SPI_InitTypeDef  SPI_InitStructure;
 
-  /* Enable the SPI periph */
-#ifdef HARDWARE_MODULE_WIFI_V1
-  RCC_APB1PeriphClockCmd(BMA250E_SPI_CLK, ENABLE);
-#else
-  RCC_APB2PeriphClockCmd(BMA250E_SPI_CLK, ENABLE);
-#endif
 
-  /* Enable SCK, MOSI and MISO GPIO clocks */
-  RCC_AHB1PeriphClockCmd(BMA250E_SPI_SCK_GPIO_CLK | BMA250E_SPI_MISO_GPIO_CLK | BMA250E_SPI_MOSI_GPIO_CLK, ENABLE);
+    /* Enable the SPI periph */
+    RCC_APB2PeriphClockCmd(BMA250E_SPI_CLK, ENABLE);
 
-  /* Enable CS  GPIO clock */
-  RCC_AHB1PeriphClockCmd(BMA250E_SPI_CS_GPIO_CLK, ENABLE);
+    /* Enable SCK, MOSI and MISO GPIO clocks */
+    RCC_AHB1PeriphClockCmd(BMA250E_SPI_SCK_GPIO_CLK | BMA250E_SPI_MISO_GPIO_CLK | BMA250E_SPI_MOSI_GPIO_CLK, ENABLE);
 
-  /* Enable INT1 GPIO clock */
-  RCC_AHB1PeriphClockCmd(BMA250E_SPI_INT1_GPIO_CLK, ENABLE);
+    /* Enable CS  GPIO clock */
+    RCC_AHB1PeriphClockCmd(BMA250E_SPI_CS_GPIO_CLK, ENABLE);
 
-  /* Enable INT2 GPIO clock */
-  RCC_AHB1PeriphClockCmd(BMA250E_SPI_INT2_GPIO_CLK, ENABLE);
+    /* Enable INT1 INT2 GPIO clock. */
+    RCC_AHB1PeriphClockCmd(BMA250E_SPI_INT1_GPIO_CLK, ENABLE);
+    RCC_AHB1PeriphClockCmd(BMA250E_SPI_INT2_GPIO_CLK, ENABLE);
 
-  GPIO_PinAFConfig(BMA250E_SPI_SCK_GPIO_PORT, BMA250E_SPI_SCK_SOURCE, BMA250E_SPI_SCK_AF);
-  GPIO_PinAFConfig(BMA250E_SPI_MISO_GPIO_PORT, BMA250E_SPI_MISO_SOURCE, BMA250E_SPI_MISO_AF);
-  GPIO_PinAFConfig(BMA250E_SPI_MOSI_GPIO_PORT, BMA250E_SPI_MOSI_SOURCE, BMA250E_SPI_MOSI_AF);
+    GPIO_PinAFConfig(BMA250E_SPI_SCK_GPIO_PORT, BMA250E_SPI_SCK_SOURCE, BMA250E_SPI_SCK_AF);
+    GPIO_PinAFConfig(BMA250E_SPI_MISO_GPIO_PORT, BMA250E_SPI_MISO_SOURCE, BMA250E_SPI_MISO_AF);
+    GPIO_PinAFConfig(BMA250E_SPI_MOSI_GPIO_PORT, BMA250E_SPI_MOSI_SOURCE, BMA250E_SPI_MOSI_AF);
 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_DOWN; //GPIO_PuPd_NOPULL;//
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_DOWN; 
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
-  /* SPI SCK pin configuration */
-  GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_SCK_PIN;
-  GPIO_Init(BMA250E_SPI_SCK_GPIO_PORT, &GPIO_InitStructure);
+    /* SPI SCK pin configuration */
+    GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_SCK_PIN;
+    GPIO_Init(BMA250E_SPI_SCK_GPIO_PORT, &GPIO_InitStructure);
 
-  /* SPI  MOSI pin configuration */
-  GPIO_InitStructure.GPIO_Pin =  BMA250E_SPI_MOSI_PIN;
-  GPIO_Init(BMA250E_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure);
+    /* SPI  MOSI pin configuration */
+    GPIO_InitStructure.GPIO_Pin =  BMA250E_SPI_MOSI_PIN;
+    GPIO_Init(BMA250E_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure);
 
-  /* SPI MISO pin configuration */
-  //GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN; //wanglei add
-  GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_MISO_PIN;
-  GPIO_Init(BMA250E_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
+    /* SPI MISO pin configuration */
+    GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_MISO_PIN;
+    GPIO_Init(BMA250E_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
 
-  /* SPI configuration -------------------------------------------------------*/
-  SPI_I2S_DeInit(BMA250E_SPI);
-  SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-  SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
-  SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
-  SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
-  SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
-  SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
-  SPI_InitStructure.SPI_CRCPolynomial = 7;
-  SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
-  SPI_Init(BMA250E_SPI, &SPI_InitStructure);
 
-  /* Enable SPI2  */
-  SPI_Cmd(BMA250E_SPI, ENABLE);
+    /* SPI configuration -------------------------------------------------------*/
+    SPI_I2S_DeInit(BMA250E_SPI);
+    SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+    SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+    SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+    SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+    SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+    SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+    SPI_InitStructure.SPI_CRCPolynomial = 7;
+    SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+    SPI_Init(BMA250E_SPI, &SPI_InitStructure);
 
-  /* Configure GPIO PIN for Lis Chip select */
-  GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_CS_PIN;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(BMA250E_SPI_CS_GPIO_PORT, &GPIO_InitStructure);
+    /* Enable SPI2  */
+    SPI_Cmd(BMA250E_SPI, ENABLE);
 
-  /* Deselect : Chip Select high */
-  GPIO_SetBits(BMA250E_SPI_CS_GPIO_PORT, BMA250E_SPI_CS_PIN);
+    /* Configure GPIO PIN for Lis Chip select */
+    GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_CS_PIN;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(BMA250E_SPI_CS_GPIO_PORT, &GPIO_InitStructure);
 
-  /* Configure GPIO PINs to detect Interrupts */
-  GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_INT1_PIN;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-  GPIO_Init(BMA250E_SPI_INT1_GPIO_PORT, &GPIO_InitStructure);
+    /* Deselect : Chip Select high */
+    GPIO_SetBits(BMA250E_SPI_CS_GPIO_PORT, BMA250E_SPI_CS_PIN);
 
-  GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_INT2_PIN;
-  GPIO_Init(BMA250E_SPI_INT2_GPIO_PORT, &GPIO_InitStructure);
+    /* Configure GPIO PINs to detect Interrupts */
+    GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_INT1_PIN;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+    GPIO_Init(BMA250E_SPI_INT1_GPIO_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin = BMA250E_SPI_INT2_PIN;
+    GPIO_Init(BMA250E_SPI_INT2_GPIO_PORT, &GPIO_InitStructure);
 }
+
 
 /**
   * @brief  Sends a Byte through the SPI interface and return the Byte received
@@ -221,6 +213,7 @@ static uint8_t BMA250E_SendByte(uint8_t byte)
   return (uint8_t)SPI_I2S_ReceiveData(BMA250E_SPI);
 
 }
+
 
 #ifdef USE_DEFAULT_TIMEOUT_CALLBACK
 /**
@@ -282,6 +275,7 @@ void gsnr_int_config(FunctionalState state)
     
 }
 
+
 void EXTI1_IRQHandler(void)
 {
     /* disable interrupt */
@@ -292,6 +286,7 @@ void EXTI1_IRQHandler(void)
         EXTI_ClearITPendingBit(EXTI_Line1);
     }
 }
+
 
 void EXTI2_IRQHandler(void)
 {
@@ -343,10 +338,12 @@ void gsnr_get_acc(float *pdata)
     }
 }
 
+
 void gsnr_drv_init()
 {
-  /* Configure the low level interface ---------------------------------------*/
+    /* Configure the low level interface ---------------------------------------*/
     BMA250E_LowLevel_Init();
+  
     /* Configure MEMS: data rate, power mode, full scale and axes */
     gsnr_write_reg(0x34, 0x00);       //config spi 4 wire mode
     gsnr_write_reg(0x14, 0xB6);       //software reset

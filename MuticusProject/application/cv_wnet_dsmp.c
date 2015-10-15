@@ -49,7 +49,7 @@ int dsmp_send(wnet_envar_t *p_wnet, wnet_txinfo_t *txinfo,
     len = DSMP_HEADER_LEN;
     pdata -= len;
     p_dsmp_head = (dsmp_hdr_t *)pdata;
-    memset(p_sec_head, 0, len);
+    memset(p_dsmp_head, 0, len);
 
     /* Initial dsmp frame head domain. */
     p_dsmp_head->version = DSMP_VERSION;

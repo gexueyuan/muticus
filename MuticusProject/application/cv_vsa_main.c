@@ -23,7 +23,7 @@ OSAL_DEBUG_ENTRY_DEFINE(vsa)
 #include "cv_vam.h"
 #include "cv_cms_def.h"
 #include "cv_vsa.h"
-#include "key.h"
+#include "cv_drv_key.h"
 #include "math.h"
 #include "arm_math.h"
 
@@ -219,7 +219,7 @@ void  vsa_set_period(vsa_info_t* vsa_node,vam_stastatus_t* remote)
 int32_t  vsa_preprocess_pos(void)
 {
     vam_stastatus_t local_status;  
-    vam_stastatus_t remote_status;
+    vam_stastatus_t remote_status = { 0 };
     vsa_envar_t *p_vsa = &cms_envar.vsa;
     vsa_position_node_t *p_pnt = NULL;
     vam_pos_data temp_data;
@@ -234,19 +234,22 @@ int32_t  vsa_preprocess_pos(void)
     if (0x1 & g_dbg_print_type){
         test_comm();
     }
-    vam_get_all_peer_pid(peer_pid,VAM_NEIGHBOUR_MAXNUM,&peer_count);
+    vam_get_all_peer_pid(peer_pid, VAM_NEIGHBOUR_MAXNUM, &peer_count);
 
-    if (peer_count != 0) {
+    if (peer_count != 0) 
+    {
         vam_get_local_current_status(&local_status);
-        for (i = 0;i < peer_count;i++) {
+        
+        for (i = 0;i < peer_count;i++) 
+        {
             vam_get_peer_current_status(peer_pid[i],&remote_status); /*!!查询不到的风险!!*/  
             
             p_pnt = &p_vsa->position_node[i];
 
-            memcpy(p_pnt->vsa_position.pid,remote_status.pid,RCP_TEMP_ID_LEN);
+            memcpy(p_pnt->vsa_position.pid, remote_status.pid, RCP_TEMP_ID_LEN);
 
-            if(remote_status.cnt == 0){
-
+            if(remote_status.cnt == 0)
+            {
                 temp_data = vsm_get_data(&local_status,&remote_status);
 
                 p_pnt->vsa_position.vsa_location = vsa_position_classify(&local_status,&remote_status,&temp_data,&temp_delta);
@@ -271,20 +274,21 @@ int32_t  vsa_preprocess_pos(void)
 
                 vsa_set_period(&(p_pnt->vsa_position),&remote_status);
                 
-                if (0x2 & g_dbg_print_type){
+                if (0x2 & g_dbg_print_type)
+                {
                     memset(strbuf, 0x0, sizeof(strbuf));
                     sprintf(strbuf, "%3.6f", temp_delta);
                     osal_printf("(%02X %02X %02X %02X), %d, %d, %d, %d, %s, %lu\r\n", \
                         p_pnt->vsa_position.pid[0],p_pnt->vsa_position.pid[1], p_pnt->vsa_position.pid[2],p_pnt->vsa_position.pid[3],\
                         p_pnt->vsa_position.vsa_location, p_pnt->vsa_position.linear_distance, p_pnt->vsa_position.v_offset,\
                         p_pnt->vsa_position.h_offset,strbuf,p_pnt->vsa_position.safe_distance);
+                } 
             }
-                
-            }
-            else{
-
+            else
+            {
                 remote_status.cnt--;               
             }
+            
             vam_set_peer_cnt(remote_status.pid,remote_status.cnt);                
     						
 
@@ -319,16 +323,20 @@ vsa_position_node_t *vsa_find_pn(vsa_envar_t *p_vsa, uint8_t *temporary_id)
 {
     vsa_position_node_t *p_pn = NULL, *pos;
 
-    list_for_each_entry(pos, vsa_position_node_t, &p_vsa->position_list, list){
-        if (memcmp(pos->vsa_position.pid, temporary_id, RCP_TEMP_ID_LEN) == 0){
+
+    list_for_each_entry(pos, vsa_position_node_t, &p_vsa->position_list, list)
+    {
+        if (memcmp(pos->vsa_position.pid, temporary_id, RCP_TEMP_ID_LEN) == 0)
+        {
             p_pn = pos;
             break;
         }
     }
+    
     /* not found */
-    if (p_pn == NULL){
-        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "vsa position node need updating!\n\n");
-                        
+    if (p_pn == NULL)
+    {
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "vsa position node need updating!\n\n");                  
     }
     return p_pn;
 }
@@ -479,7 +487,7 @@ uint32_t vsa_search_warning(uint32_t warning_id)
  @return  : 
 *****************************************************************************/
 
-void vsa_send_ccw_warning(uint32_t warning_id)
+void vsa_send_ccw_warning(uint32_t warning_id,uint16_t distance)
 {
     vsa_envar_t *p_vsa = &cms_envar.vsa;
     /* danger is detected */    
@@ -490,11 +498,18 @@ void vsa_send_ccw_warning(uint32_t warning_id)
     /* inform system to start alert */
         p_vsa->alert_pend |= (1<<warning_id);
         sys_add_event_queue(&cms_envar.sys, \
-                            SYS_MSG_START_ALERT, 0, warning_id, NULL);
+                            SYS_MSG_START_ALERT, distance, warning_id, NULL);
     }
 
 }
 
+void send_alert(uint32_t warning_id,uint16_t distance)
+{
+
+    vsa_send_ccw_warning(warning_id,distance);
+
+}
+FINSH_FUNCTION_EXPORT(send_alert,param1:type param2:distance);
 
 /*****************************************************************************
  @funcname: vsa_cancel_ccw_warning
@@ -538,9 +553,10 @@ static int ccw_add_list(uint32_t warning_id,vsa_position_node_t *p_pnt)
         return warning_id;
     }
     
-    if (p_vsa->alert_mask & (1<<warning_id)){
-
-        if (list_empty(&p_vsa->crd_list)){
+    if (p_vsa->alert_mask & (1<<warning_id))
+    {
+        if (list_empty(&p_vsa->crd_list))
+        {
             p_crd = (vsa_crd_node_t*)osal_malloc(sizeof(vsa_crd_node_t));
             memcpy(p_crd->pid,p_pnt->vsa_position.pid,RCP_TEMP_ID_LEN);
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_TRACE,"list empty,create it \n");
@@ -559,7 +575,7 @@ static int ccw_add_list(uint32_t warning_id,vsa_position_node_t *p_pnt)
                             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_TRACE,\
                                                 "pid(%02X %02X %02X %02X) warning id=%d  dis=%d\n\n",p_crd->pid[0],p_crd->pid[1],p_crd->pid[2],\
                                                 p_crd->pid[3],warning_id,p_pnt->vsa_position.linear_distance);
-                            vsa_send_ccw_warning(warning_id);
+                            vsa_send_ccw_warning(warning_id,p_pnt->vsa_position.v_offset);
                         }
                         else{
                             pos->ccw_cnt++;
@@ -674,7 +690,7 @@ static int ebd_judge(vsa_envar_t *p_vsa)
 static int vbd_judge(vsa_envar_t *p_vsa)
 {
     
-#if 0
+#if 1
     vsa_position_node_t *p_node;    
     int32_t dis_actual;
     p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
@@ -897,18 +913,19 @@ uint32_t vsa_get_alarm(uint32_t vsa_id)
 static int vsa_manual_broadcast_proc(vsa_envar_t *p_vsa, void *arg)
 {
   int err = 1;  /* '1' represent is not handled. */ 
-  sys_msg_t *p_msg = (sys_msg_t *)arg;
+  sys_msg_st *p_msg = (sys_msg_st *)arg;
+
   
-  if(p_msg->argc){
+  if(p_msg->argc)
+  {
       vam_active_alert(VAM_ALERT_MASK_VBD);
-      sys_add_event_queue(&cms_envar.sys, \
-                    SYS_MSG_ALARM_ACTIVE, 0, VSA_ID_VBD, NULL);
+      sys_add_event_queue(&cms_envar.sys, SYS_MSG_ALARM_ACTIVE, 0, VSA_ID_VBD, NULL);
       OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "Active Vihicle Break Down Alert\n");
   }   
-  else {   
+  else 
+  {   
       vam_cancel_alert(VAM_ALERT_MASK_VBD);
-      sys_add_event_queue(&cms_envar.sys, \
-                    SYS_MSG_ALARM_CANCEL, 0, VSA_ID_VBD, NULL);
+      sys_add_event_queue(&cms_envar.sys, SYS_MSG_ALARM_CANCEL, 0, VSA_ID_VBD, NULL);
       OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "Cancel Vihicle Break Down Alert\n");
   }
   
@@ -987,8 +1004,9 @@ static int vsa_side_alarm_proc(vsa_envar_t *p_vsa, void *arg)
 
 static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
-    sys_msg_t* p_msg = (sys_msg_t*)arg;
-    
+    sys_msg_st* p_msg = (sys_msg_st*)arg;
+    vsa_position_node_t *p_node;    
+    p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);   
 
     switch(p_msg->argc){
 
@@ -999,7 +1017,7 @@ static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
             p_vsa->remote.pid[0],p_vsa->remote.pid[1],p_vsa->remote.pid[2],p_vsa->remote.pid[3]);
              
             sys_add_event_queue(&cms_envar.sys, \
-                              SYS_MSG_START_ALERT, 0, VSA_ID_VBD, NULL);
+                              SYS_MSG_START_ALERT, p_node->vsa_position.linear_distance, VSA_ID_VBD, NULL);
         }
         else if (p_msg->len == 0){
                   /* inform system to stop alert */
@@ -1024,8 +1042,9 @@ static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 
 static int vsa_eebl_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
-    sys_msg_t* p_msg = (sys_msg_t*)arg;
-    
+    sys_msg_st* p_msg = (sys_msg_st*)arg;
+    vsa_position_node_t *p_node;    
+    p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);  
     switch(p_msg->argc){
 
     case VAM_ALERT_MASK_EBD:
@@ -1035,7 +1054,7 @@ static int vsa_eebl_recieve_proc(vsa_envar_t *p_vsa, void *arg)
             p_vsa->remote.pid[0],p_vsa->remote.pid[1],p_vsa->remote.pid[2],p_vsa->remote.pid[3]);
              
             sys_add_event_queue(&cms_envar.sys, \
-                              SYS_MSG_START_ALERT, 0, VSA_ID_EBD, NULL);
+                              SYS_MSG_START_ALERT, p_node->vsa_position.linear_distance, VSA_ID_EBD, NULL);
         }
         else if (p_msg->len == 0){
                   /* inform system to stop alert */
@@ -1136,20 +1155,20 @@ void vsa_base_proc(void *parameter)
         for(i = 0;i < count_neighour;i++)
         {
             
-            if(vsa_app_handler_tbl[VSA_MSG_CFCW_ALARM-VSA_MSG_PROC]){    
-                vsa_id = vsa_app_handler_tbl[VSA_MSG_CFCW_ALARM-VSA_MSG_PROC](p_vsa,&i);
+            if(vsa_app_handler_tbl[VSA_MSG_CFCW_ALARM - VSA_MSG_PROC]){    
+                vsa_id = vsa_app_handler_tbl[VSA_MSG_CFCW_ALARM - VSA_MSG_PROC](p_vsa,&i);
             }
 
-            if((!vsa_id)&&(vsa_app_handler_tbl[VSA_MSG_CRCW_ALARM-VSA_MSG_PROC])){    
-                vsa_id = vsa_app_handler_tbl[VSA_MSG_CRCW_ALARM-VSA_MSG_PROC](p_vsa,&i);
+            if((!vsa_id)&&(vsa_app_handler_tbl[VSA_MSG_CRCW_ALARM - VSA_MSG_PROC])){    
+                vsa_id = vsa_app_handler_tbl[VSA_MSG_CRCW_ALARM - VSA_MSG_PROC](p_vsa,&i);
             }
 
-            if((!vsa_id)&&(vsa_app_handler_tbl[VSA_MSG_OPPOSITE_ALARM-VSA_MSG_PROC])){  
-                vsa_id = vsa_app_handler_tbl[VSA_MSG_OPPOSITE_ALARM-VSA_MSG_PROC](p_vsa,&i);
+            if((!vsa_id)&&(vsa_app_handler_tbl[VSA_MSG_OPPOSITE_ALARM - VSA_MSG_PROC])){  
+                vsa_id = vsa_app_handler_tbl[VSA_MSG_OPPOSITE_ALARM - VSA_MSG_PROC](p_vsa,&i);
             }
 
-            if((!vsa_id)&&(vsa_app_handler_tbl[VSA_MSG_SIDE_ALARM-VSA_MSG_PROC])){    
-                vsa_id = vsa_app_handler_tbl[VSA_MSG_SIDE_ALARM-VSA_MSG_PROC](p_vsa,&i);
+            if((!vsa_id)&&(vsa_app_handler_tbl[VSA_MSG_SIDE_ALARM - VSA_MSG_PROC])){    
+                vsa_id = vsa_app_handler_tbl[VSA_MSG_SIDE_ALARM - VSA_MSG_PROC](p_vsa,&i);
             }
 
             if(vsa_id){
@@ -1169,7 +1188,7 @@ void vsa_base_proc(void *parameter)
 void vsa_thread_entry(void *parameter)
 {
     rt_err_t err;
-    sys_msg_t* p_msg = NULL;
+    sys_msg_st* p_msg = NULL;
     vsa_envar_t *p_vsa = (vsa_envar_t *)parameter;
 
 
@@ -1180,7 +1199,7 @@ void vsa_thread_entry(void *parameter)
         err = osal_queue_recv(p_vsa->queue_vsa, &p_msg, RT_WAITING_FOREVER);
         if (err == OSAL_STATUS_SUCCESS)
         {    
-            if(vsa_app_handler_tbl[p_msg->id - VSA_MSG_PROC] != NULL)
+            if (vsa_app_handler_tbl[p_msg->id - VSA_MSG_PROC] != NULL)
             {
                 err = vsa_app_handler_tbl[p_msg->id - VSA_MSG_PROC](p_vsa, p_msg);
             }        
@@ -1194,28 +1213,42 @@ void vsa_thread_entry(void *parameter)
     }
 }
 
-osal_status_t vsa_add_event_queue(vsa_envar_t *p_vsa, 
-                             uint16_t msg_id, 
-                             uint16_t msg_len, 
-                             uint32_t msg_argc,
-                             void    *msg_argv)
+
+osal_status_t vsa_add_event_queue
+(
+    vsa_envar_t *p_vsa, 
+    
+    uint16_t msg_id, 
+    uint16_t msg_len, 
+    uint32_t msg_argc,
+    void    *msg_argv
+)
 {
-    int err = OSAL_STATUS_NOMEM;
-    sys_msg_t *p_msg;
+    int                err = OSAL_STATUS_SUCCESS;
+    sys_msg_st_ptr msg_ptr = NULL;
 
-    p_msg = osal_malloc(sizeof(sys_msg_t));
-    if (p_msg){
-        p_msg->id = msg_id;
-        p_msg->len = msg_len;
-        p_msg->argc = msg_argc;
-        p_msg->argv = msg_argv;
-        err = osal_queue_send(p_vsa->queue_vsa,p_msg);
+
+    msg_ptr = osal_malloc(SYS_MSG_ST_LEN);
+    
+    if (msg_ptr != NULL)
+    {
+        msg_ptr->id = msg_id;
+        msg_ptr->len = msg_len;
+        msg_ptr->argc = msg_argc;
+        msg_ptr->argv = msg_argv;
+
+        if (osal_queue_send(p_vsa->queue_vsa, msg_ptr) != OSAL_STATUS_SUCCESS)
+        {
+            osal_free(msg_ptr);
+            
+            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: Message queue send failed, msg = %04x. \n", __FUNCTION__, msg_id);
+            err = OSAL_STATUS_ERROR_UNDEFINED;
+        }  
     }
-
-    if (err != OSAL_STATUS_SUCCESS){
-        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n",\
-                                   __FUNCTION__, err, msg_id);
-        osal_free(p_msg);
+    else
+    {
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: No enough memory for new message, msg = %04x. \n", __FUNCTION__, msg_id);
+        err = OSAL_STATUS_NOMEM;
     }
 
     return err;

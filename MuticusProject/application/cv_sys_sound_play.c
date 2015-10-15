@@ -19,26 +19,63 @@
 #include "voc.h"
 
 
-#define SOUND_PLAY_INTERVAL MS_TO_TICK(200)
-#define BIBI_PRE_COUNT 3
+
+#define SOUND_PLAY_INTERVAL MS_TO_TICK(50)
+#define BIBI_PRE_COUNT 1
 #define MAX_VOICE  6  /* MUST BE such value as 2,4,8,16... */
 static uint8_t voice[MAX_VOICE];
 static uint32_t voice_wr_idx;
 static uint32_t voice_rd_idx;
 static uint32_t phase = 0;
 
-#define NOTICE_STRING  "soundc"
+#define NOTICE_STRING  "soundb"
 #define CFCW_VOC "[3]请注意[2]前车[2]距离" //"北京[3]东直门站到了"//
 #define CRCW_VOC "后方超车"
 #define EEBL_VOC "前方急刹"
 #define VBD_VOC "[2]前方有故障车"  
 
-/*
-void voc_stop(void)
+#define FRONT "前方"
+#define EEBL "急刹"
+#define VBD  "故障"
+#define CFCW "车距"
+#define MI "米"
+
+char  play_string[50];
+uint32_t voc_distance;
+
+
+char* itoa(int num,char*str,int radix)
 {
-    syn6288_stop();
+    /*索引表*/
+    char index[]="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    unsigned unum;/*中间变量*/
+    int i=0,j,k;
+    /*确定unum的值*/
+    if(radix==10&&num<0)/*十进制负数*/
+    {
+    unum=(unsigned)-num;
+    str[i++]='-';
+    }
+    else unum=(unsigned)num;/*其他情况*/
+    /*转换*/
+    do{
+    str[i++]=index[unum%(unsigned)radix];
+    unum/=radix;
+    }while(unum);
+    str[i]='\0';
+    /*逆序*/
+    if(str[0]=='-')k=1;/*十进制负数*/
+    else k=0;
+    char temp;
+    for(j=k;j<=(i-1)/2;j++)
+    {
+    temp=str[j];
+    str[j]=str[i-1+k-j];
+    str[i-1+k-j]=temp;
+    }
+    return str;
 }
-*/
+
 static void sound_play_complete(void)
 {
     sys_envar_t *p_sys = &cms_envar.sys;
@@ -62,11 +99,20 @@ static void voice_play_once(uint32_t alert_type, void *complete)
 {
     uint8_t *data;
     uint32_t length = 0;
+    char distance_char[10];
+    memset(play_string,0,sizeof(play_string));   
 
     switch (alert_type) {
                
     case HI_OUT_CRD_ALERT:
-        data = CFCW_VOC;
+        //data = CFCW_VOC;
+        sprintf(distance_char,"%d", voc_distance);
+        strcpy(play_string,FRONT);     
+        strcat(play_string,CFCW);
+        strcat(play_string,(const char*)distance_char);// (const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);
+        //osal_printf("string is %s\n",play_string);
+        data= play_string;
         break;
 
     case HI_OUT_CRD_REAR_ALERT:
@@ -74,11 +120,23 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         break;
 
     case HI_OUT_VBD_ALERT:
-        data = VBD_VOC;
+        //data = VBD_VOC;
+        strcpy(play_string,FRONT);
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);
+        strcat(play_string,VBD);
+        //osal_printf("string is %s\n",play_string);
+        data= play_string;
         break;
 
     case HI_OUT_EBD_ALERT:
-        data = EEBL_VOC;
+        //data = EEBL_VOC;
+        strcpy(play_string,FRONT);
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);
+        strcat(play_string,EEBL);
+        //osal_printf("string is %s\n",play_string);
+        data= play_string;
         break;
     
     default:
@@ -95,8 +153,11 @@ void sound_notice_di(void)
     notice_di_play_once(NULL);
 }
 
-void sound_alert_start(uint32_t alert_type)
+void sound_alert_start(uint32_t alert_type,uint32_t distance)
 {
+
+    voc_distance = distance;
+    
     if (alert_type != HI_OUT_NONE) {
         voice[voice_wr_idx] = alert_type;
         if (++voice_wr_idx >= MAX_VOICE) {
@@ -113,18 +174,21 @@ void sound_alert_start(uint32_t alert_type)
 }
 void alert_start(uint32_t alert_type)
 {
-    sound_alert_start(alert_type);
+    //sound_alert_start(alert_type);
     //voice_play_once(alert_type,NULL);
+    sound_alert_start(alert_type,100);
+
+    
 }
 FINSH_FUNCTION_EXPORT(alert_start, alert_start);
 
-void sound_alert_stop()
+void sound_alert_stop(void)
 {
     osal_enter_critical();
     phase = 0;
     osal_leave_critical();
 
-    voc_stop();
+    voc_stop(NULL);
     syn6288_stop();
     memset(voice, 0, sizeof(voice));
     voice_wr_idx = 0;

@@ -49,7 +49,7 @@ vam_envar_t *p_vam_envar;
 
 
 
-void vam_main_proc(vam_envar_t *p_vam, sys_msg_t *p_msg)
+void vam_main_proc(vam_envar_t *p_vam, sys_msg_st *p_msg)
 {
     switch(p_msg->id)
     {
@@ -134,7 +134,7 @@ void vam_main_proc(vam_envar_t *p_vam, sys_msg_t *p_msg)
 void vam_thread_entry(void *parameter)
 {
     rt_err_t err;
-    sys_msg_t *p_msg = NULL;
+    sys_msg_st *p_msg = NULL;
     vam_envar_t *p_vam = (vam_envar_t *)parameter;
 
 
@@ -166,10 +166,10 @@ int vam_add_event_queue
 )
 {
     int err = OSAL_STATUS_NOMEM;
-    sys_msg_t *p_msg = NULL;
+    sys_msg_st *p_msg = NULL;
 
 
-    p_msg = osal_malloc(sizeof(sys_msg_t));
+    p_msg = osal_malloc(sizeof(sys_msg_st));
     if (p_msg) 
     {
         p_msg->id = msg_id;
@@ -202,7 +202,7 @@ int vam_add_event_queue_2(vam_envar_t *p_vam, void *p_msg)
     err = osal_queue_send(p_vam->queue_vam, p_msg);
     if (err != OSAL_STATUS_SUCCESS)
     {
-        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n", __FUNCTION__, err, ((sys_msg_t *)p_msg)->id);
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n", __FUNCTION__, err, ((sys_msg_st *)p_msg)->id);
     }
 
     return err;
@@ -240,12 +240,20 @@ void vam_init(void)
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "PID: %02x %02x %02x %02x\r\n", \
                                            p_vam->local.pid[0], p_vam->local.pid[1], p_vam->local.pid[2], p_vam->local.pid[3]);
 
+    /* Initial neibhour list head and free list head structure. */
     INIT_LIST_HEAD(&p_vam->neighbour_list);
     INIT_LIST_HEAD(&p_vam->sta_free_list);
+
+    /* Initial list semaphore. */
+    p_vam->sem_sta = osal_sem_create("s-sta", 1);
+    osal_assert(p_vam->sem_sta != RT_NULL);
+
+    /* Add all the list node to free list. */
     for(i = 0; i< VAM_NEIGHBOUR_MAXNUM; i++)
     {
         list_add_tail(&p_vam->remote[i].list, &p_vam->sta_free_list);
     }
+
 
      /* os object for vam */
     p_vam->queue_vam = osal_queue_create("q-vam", VAM_QUEUE_SIZE);
@@ -272,8 +280,7 @@ void vam_init(void)
     p_vam->timer_neighbour_life = osal_timer_create("tm-nl", timer_neigh_time_callback, p_vam, NEIGHBOUR_LIFE_ACCUR, RT_TIMER_FLAG_PERIODIC); 					
     osal_assert(p_vam->timer_neighbour_life != RT_NULL);
 
-    p_vam->sem_sta = osal_sem_create("s-sta", 1);
-    osal_assert(p_vam->sem_sta != RT_NULL);
+
 
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "module initial\n");
 }

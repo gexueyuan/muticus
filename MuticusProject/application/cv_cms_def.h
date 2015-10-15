@@ -108,9 +108,9 @@ enum SYSTEM_MSG_TYPE
     VSA_MSG_EEBL_BC,
     VSA_MSG_AUTO_BC,
     
-    VSA_MSG_CFCW_ALARM,
-    VSA_MSG_CRCW_ALARM,
-    VSA_MSG_OPPOSITE_ALARM,
+    VSA_MSG_CFCW_ALARM,      /* Close front warning. */
+    VSA_MSG_CRCW_ALARM,      /* Close rear warning. */
+    VSA_MSG_OPPOSITE_ALARM, 
     VSA_MSG_SIDE_ALARM,
 
     VSA_MSG_ACC_RC,
@@ -131,9 +131,9 @@ enum HI_OUT_TYPE
     HI_OUT_GPS_CAPTURED,
     HI_OUT_GPS_LOST,
     
-    HI_OUT_CRD_ALERT,          /* 近距离 */
+    HI_OUT_CRD_ALERT,         /* 近距离 */
     HI_OUT_CRD_CANCEL,
-    HI_OUT_CRD_REAR_ALERT,
+    HI_OUT_CRD_REAR_ALERT,    /* 后方近距离 */
     HI_OUT_CRD_REAR_CANCEL,
     
     HI_OUT_VBD_ALERT,         /* 故障 */
@@ -168,16 +168,18 @@ enum HI_IN_TYPE
  * declaration of structs                                                    *
 *****************************************************************************/
 
-/**
-    structure of system global message 
-*/
-typedef struct _sys_msg
+/* Structure of system global message.*/
+typedef struct _sys_msg_st
 {
     uint16_t     id;
     uint16_t    len;
     uint32_t   argc; 
     void      *argv;
-}sys_msg_t;
+    
+}sys_msg_st, *sys_msg_st_ptr;
+
+#define SYS_MSG_ST_LEN    (sizeof(sys_msg_st))
+
 
 /** structure of system configure parameters. */
 typedef struct _cfg_param{
@@ -211,11 +213,7 @@ typedef struct _sys_envar{
     Led_Color led_color;
     Led_State led_state;
     uint8_t led_period;
-    #ifdef HARDWARE_MODULE_WIFI_V1
-    uint16_t led_blink_duration;
-    uint16_t led_blink_period;
-    uint16_t led_blink_cnt;
-    #endif
+
 	uint8_t voc_flag;
 
     /* os related */

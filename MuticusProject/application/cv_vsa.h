@@ -209,11 +209,15 @@ typedef int (*vsa_app_handler)(vsa_envar_t *p_vsa, void *p_msg);
 *****************************************************************************/
 void vsa_start(void);
 
-osal_status_t vsa_add_event_queue(vsa_envar_t *p_vsa, 
-                             uint16_t msg_id, 
-                             uint16_t msg_len, 
-                             uint32_t msg_argc,
-                             void    *msg_argv);
+osal_status_t vsa_add_event_queue
+(
+    vsa_envar_t *p_vsa, 
+    
+    uint16_t msg_id, 
+    uint16_t msg_len, 
+    uint32_t msg_argc,
+    void    *msg_argv
+);
 
 uint32_t vsa_get_alarm(uint32_t vsa_id);
 #endif /* __CV_VSA_H__ */

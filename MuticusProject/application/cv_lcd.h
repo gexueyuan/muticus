@@ -231,8 +231,10 @@ typedef struct _vec_param_st
 typedef struct _sys_param_st
 {
     uint8_t       sys_mode;
-    
+
     vec_param_st vec_param;
+
+    uint8_t       gps_stat;
     uint32_t    alarm_stat;
     
 }sys_param_st, *sys_param_st_ptr;
@@ -243,7 +245,9 @@ typedef struct _sys_param_st
 #define SYS_SYSMODE_NORMAL      0x00
 #define SYS_SYSMODE_ALARM       0x01
 
-
+/* Macro for "gps_stat". */
+#define SYS_GPS_STAT_LOST       0x00
+#define SYS_GPS_STAT_LOCATED    0x01
 
 
 

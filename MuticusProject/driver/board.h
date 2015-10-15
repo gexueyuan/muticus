@@ -20,8 +20,6 @@
 #include <rtthread.h>
 
 
-//#define HARDWARE_MODULE_WIFI_V2
-
 #define HARDWARE_MODULE_WIFI_V3
 
 

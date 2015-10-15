@@ -897,8 +897,9 @@ const uint16_t Ascii8x8[] =
 const drv_lcd_plane_st PicFontGroup[] = 
 { 
     /*     table_ptr,        width, height */
-    { (uint16_t *)Ascii16x24,  16,  24 },    /* Lcd picture: Please pay attention to the front of the vehicle. */   
-    { (uint16_t *)Ascii12x12,  12,  12 },    /* Lcd picture: Front vehicle emergency brake. */ 
-    { (uint16_t *)Ascii8x12,    8,  12 },    /* Lcd picture: In front of a faulty vehicle. */
-    { (uint16_t *)Ascii8x8,     8,   8 },    /* Lcd picture: There is an accident ahead. */ 
+    { (uint16_t *)Ascii16x24,  16,  24 },
+    { (uint16_t *)Ascii12x12,  12,  12 },
+    { (uint16_t *)Ascii8x12,    8,  12 },
+    { (uint16_t *)Ascii8x8,     8,   8 },
+    { (uint16_t *)Ascii8x12,    6,  12 }
 };

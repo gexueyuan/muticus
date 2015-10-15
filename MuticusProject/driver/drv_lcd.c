@@ -768,9 +768,9 @@ static DRV_LCD_ERR_CODE lcd_ioctl_draw_universal_char
     addr_index += char_st_ptr->column;
 
     /* Draw the charecter's pixel based on line. */
-    for (line_index = 0; line_index < char_st_ptr->font_ptr->height; line_index++)
+    for (line_index = 0; line_index < char_st_ptr->font_ptr->height; line_index ++)
     {
-        for (dot_index= 0; dot_index < char_st_ptr->font_ptr->width; dot_index ++)
+        for (dot_index = 0; dot_index < char_st_ptr->font_ptr->width; dot_index ++)
         {
             /* Write data value to all SDRAM memory */
             if ( (((code_ptr[line_index] & ((0x80 << ((char_st_ptr->font_ptr->width / 12 ) * 8 ) ) >> dot_index)) == 0x00) && (char_st_ptr->font_ptr->width <= 12))
