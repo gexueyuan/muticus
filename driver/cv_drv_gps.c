@@ -67,8 +67,8 @@ static void gps_read_data(rt_device_t dev)
                         {   
                             if(cms_envar.vam.queue_vam ){
                             
-                                sys_msg_t *p_msg;
-                                p_msg = osal_malloc(sizeof(sys_msg_t));
+                                sys_msg_st *p_msg;
+                                p_msg = osal_malloc(sizeof(sys_msg_st));
                                 if (p_msg) {
                                     p_msg->id = VAM_MSG_GPSDATA;
                                     p_msg->len = __GPSBuff.PpBuf[__GPSBuff.Pipe].Len;

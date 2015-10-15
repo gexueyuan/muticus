@@ -49,7 +49,7 @@ vam_envar_t *p_vam_envar;
 
 
 
-void vam_main_proc(vam_envar_t *p_vam, sys_msg_t *p_msg)
+void vam_main_proc(vam_envar_t *p_vam, sys_msg_st *p_msg)
 {
     switch(p_msg->id)
     {
@@ -136,7 +136,7 @@ void vam_main_proc(vam_envar_t *p_vam, sys_msg_t *p_msg)
 void vam_thread_entry(void *parameter)
 {
     rt_err_t err;
-    sys_msg_t *p_msg = NULL;
+    sys_msg_st *p_msg = NULL;
     vam_envar_t *p_vam = (vam_envar_t *)parameter;
 
 
@@ -168,10 +168,10 @@ int vam_add_event_queue
 )
 {
     int err = OSAL_STATUS_NOMEM;
-    sys_msg_t *p_msg = NULL;
+    sys_msg_st *p_msg = NULL;
 
 
-    p_msg = osal_malloc(sizeof(sys_msg_t));
+    p_msg = osal_malloc(sizeof(sys_msg_st));
     if (p_msg) 
     {
         p_msg->id = msg_id;
@@ -204,7 +204,7 @@ int vam_add_event_queue_2(vam_envar_t *p_vam, void *p_msg)
     err = osal_queue_send(p_vam->queue_vam, p_msg);
     if (err != OSAL_STATUS_SUCCESS)
     {
-        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n", __FUNCTION__, err, ((sys_msg_t *)p_msg)->id);
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n", __FUNCTION__, err, ((sys_msg_st *)p_msg)->id);
     }
 
     return err;

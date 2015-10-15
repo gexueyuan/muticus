@@ -162,13 +162,13 @@ typedef struct _vsa_envar{
 	/*List head*/	
     list_head_t crd_list;
     list_head_t position_list;
-    //list_head_t ebd_list;
-    //list_head_t vbd_list;
     vsa_position_node_t position_node[VAM_NEIGHBOUR_MAXNUM];
     
 
-    /* os related */
+    /* Vsa local process task. */
     osal_task_t  *task_vsa_l;
+
+    /* Vsa remote process task. */
     osal_task_t  *task_vsa_r;
 
     osal_sem_t   *sem_vsa_proc;
@@ -181,7 +181,7 @@ typedef struct _vsa_envar{
 
     osal_timer_t *timer_position_prepro;
 
-    osal_timer_t *timer_eva;
+    osal_timer_t *timer_eva_stop;
                  
 }vsa_envar_t;
 
@@ -212,11 +212,15 @@ typedef int (*vsa_app_handler)(vsa_envar_t *p_vsa, void *p_msg);
 *****************************************************************************/
 void vsa_start(void);
 
-osal_status_t vsa_add_event_queue(vsa_envar_t *p_vsa, 
-                             uint16_t msg_id, 
-                             uint16_t msg_len, 
-                             uint32_t msg_argc,
-                             void    *msg_argv);
+osal_status_t vsa_add_event_queue
+(
+    vsa_envar_t *p_vsa, 
+    
+    uint16_t msg_id, 
+    uint16_t msg_len, 
+    uint32_t msg_argc,
+    void    *msg_argv
+);
 
 uint32_t vsa_get_alarm(uint32_t vsa_id);
 #endif /* __CV_VSA_H__ */

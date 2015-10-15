@@ -609,8 +609,8 @@ static void _dev_probe_entry(void *parameter)
     /*
         Inform to the system
     */
-    if(p_cms_envar->sys.queue_sys_mng) {
-        sys_add_event_queue(&p_cms_envar->sys, SYS_MSG_INITED, 0, 0, 0);
+    if(cms_envar.sys.queue_sys_mng) {
+        sys_add_event_queue(&cms_envar.sys, SYS_MSG_INITED, 0, 0, 0);
     }
 }
 

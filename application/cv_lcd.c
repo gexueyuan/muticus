@@ -32,7 +32,7 @@ sys_param_st SysParam =
 {
     SYS_SYSMODE_NORMAL,                                               /* sys_mode. */
     { VEC_ROADMODE_HIGHWAY, VEC_VECMODE_CAR, VEC_BREAKDOWNMODE_NO },  /* vec_param. */
-    0x00                                                              /* alarm_stat. */
+    SYS_GPS_STAT_LOST, 0x00                                           /* gps_stat, alarm_stat. */
 };
 
 
@@ -131,6 +131,33 @@ static void lcd_screen_background_init
     DRV_LCD_PTR->ioctl(DRV_LCD_PTR, LCD_IOCTL_DRAW_BLOCK, &background);
     
 #endif    
+}
+
+
+/**
+  * @brief  Initial gps state to the specific lcd layer.
+  * @param  See below.
+  * @retval None.
+  */
+static void lcd_gps_stat_init
+(
+    /* Lcd layer. */
+    drv_lcd_layer_value lcd_layer,
+
+    /* System parameter pointer. */
+    sys_param_st_ptr param_ptr
+)
+{
+    /* Indicator structure. */
+    drv_lcd_block_draw_st      gps_stat = { lcd_layer, 5, 5, &PicInforGroup[PIC_INDEX_INFOR_GPS] };
+
+
+    /* Fresh data to lcd layer. */
+    if(param_ptr->gps_stat == SYS_GPS_STAT_LOCATED)
+    {
+        DRV_LCD_PTR->ioctl(DRV_LCD_PTR, LCD_IOCTL_DRAW_BLOCK, &gps_stat);
+    }
+    
 }
 
 
@@ -234,7 +261,7 @@ static void lcd_vec_graph_init
 )
 {
     /* Vehicle attribute for display. Caution: all vehicles share one attribute. */
-    vec_disp_st vec_attr = { LCD_FOREGROUND_LAYER,   0,   0, 2, LCD_CIRCLE_FILLED,     0x0f00 };
+    vec_disp_st vec_attr = { LCD_FOREGROUND_LAYER,   0,   0, 2, LCD_CIRCLE_FILLED,  LCD_COLOR_BLACK };
     uint32_t   vec_index = 0;
     uint32_t     vec_num = 0;
  
@@ -312,10 +339,10 @@ static void lcd_vec_infor_init
     
     drv_lcd_string_display_st infor_group[4] = 
     {
-        { lcd_layer, 150,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_8X12], buffer_lon   },
-        { lcd_layer, 170,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_8X12], buffer_lat   },
-        { lcd_layer, 190,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_8X12], buffer_dir   },
-        { lcd_layer, 210,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_8X12], buffer_speed }
+        { lcd_layer, 150,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_6X12], buffer_lon   },
+        { lcd_layer, 170,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_6X12], buffer_lat   },
+        { lcd_layer, 190,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_6X12], buffer_dir   },
+        { lcd_layer, 210,280, LCD_COLOR_WHITE, LCD_COLOR_BLACK, &PicFontGroup[PIC_FONT_INDEX_ASCII_6X12], buffer_speed }
     };
     
     vam_stastatus_t  local_status = { 0 }; 
@@ -355,17 +382,14 @@ void lcd_sys_param_init
 )
 {
     /* Initial alarm status. */
-    sys_param_ptr->alarm_stat = sys_envar_ptr->status & ((1<<HI_OUT_VBD_ALERT) | (1<<HI_OUT_CRD_ALERT) | (1<<HI_OUT_EBD_ALERT));
+    sys_param_ptr->alarm_stat = sys_envar_ptr->status & ((1<<HI_OUT_VBD_ALERT) | (1<<HI_OUT_CRD_ALERT) | (1<<HI_OUT_CRD_REAR_ALERT) | (1<<HI_OUT_EBD_ALERT));
   
     /* Initial system mode. */
-    if(sys_param_ptr->alarm_stat != 0)
-    {
-        sys_param_ptr->sys_mode = SYS_SYSMODE_ALARM;
-    }
-    else
-    {
-        sys_param_ptr->sys_mode = SYS_SYSMODE_NORMAL;
-    }
+    sys_param_ptr->sys_mode = (sys_param_ptr->alarm_stat != 0) ? SYS_SYSMODE_ALARM : SYS_SYSMODE_NORMAL;
+
+    /* Initial gps state. */
+    sys_param_ptr->gps_stat = (vam_get_gps_status()) ? SYS_GPS_STAT_LOCATED : SYS_GPS_STAT_LOST;
+
 }
 
 
@@ -422,7 +446,10 @@ void lcd_thread_entry
 
         /* Initial vehicle information. */
         lcd_vec_infor_init(backup_layer);
-        
+
+        /* Initial gps state. */
+        lcd_gps_stat_init(backup_layer, &SysParam);
+
   
         /* Active the backup layer and inactive primary layer. */
         lcd_layer_active(backup_layer);

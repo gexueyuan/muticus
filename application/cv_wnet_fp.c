@@ -339,7 +339,7 @@ int wnet_recv(wnet_rxinfo_t *rxinfo, uint8_t *pdata, uint32_t length)
         wnet_dbg_rx_fresh++;
         wnet_dbg_rx_actual++;
     }
-    //osal_printf(" "); /* Indicate RX is in process, for debug only */
+    
     return fp_recv(p_wnet_envar, rxinfo, pdata, length);
 }
 

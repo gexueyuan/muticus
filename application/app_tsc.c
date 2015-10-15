@@ -15,6 +15,8 @@
 #include "cv_osal.h"
 #include "cv_lcd.h"
 
+#include "cv_drv_key.h"
+#include "cv_cms_def.h"
 
 /* Vehicle parameter. */
 extern sys_param_st SysParam;
@@ -121,6 +123,7 @@ static void tsc_operation_release
         {
             /* Update breakdown mode. */
             SysParam.vec_param.breakdown_mode = (VEC_BREAKDOWNMODE_INDEX_MAX <= SysParam.vec_param.breakdown_mode)? VEC_BREAKDOWNMODE_INDEX_MIN : SysParam.vec_param.breakdown_mode + 1;
+            sys_add_event_queue(&(cms_envar.sys), SYS_MSG_KEY_PRESSED, 0, C_DOWN_KEY, NULL);
         }
         else
         {

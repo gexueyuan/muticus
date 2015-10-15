@@ -16,7 +16,7 @@
 #include "cv_osal_dbg.h"
 
 #include "cv_cms_def.h"
-#include "key.h"
+#include "cv_drv_key.h"
 #include "components.h"
 
 
@@ -25,22 +25,6 @@ static void key_GPIO_Configuration(void)
     GPIO_InitTypeDef GPIO_InitStructure;
 
     /* init gpio configuration */
-#ifdef HARDWARE_MODULE_WIFI_V1
-    RCC_AHB1PeriphClockCmd(KEY0_GPIO_CLK | KEY1_GPIO_CLK | KEY2_GPIO_CLK,ENABLE);
-    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-    
-    GPIO_InitStructure.GPIO_Pin   = KEY0_PIN;
-    GPIO_Init(KEY0_GPIO_PORT, &GPIO_InitStructure);
-
-    GPIO_InitStructure.GPIO_Pin   = KEY1_PIN;
-    GPIO_Init(KEY1_GPIO_PORT, &GPIO_InitStructure);
-
-    GPIO_InitStructure.GPIO_Pin   = KEY2_PIN;
-    GPIO_Init(KEY2_GPIO_PORT, &GPIO_InitStructure);
-#elif defined (HARDWARE_MODULE_WIFI_V2)
     RCC_AHB1PeriphClockCmd(KEY0_GPIO_CLK,ENABLE);
     GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
@@ -49,17 +33,6 @@ static void key_GPIO_Configuration(void)
 
     GPIO_InitStructure.GPIO_Pin   = KEY0_PIN;
     GPIO_Init(KEY0_GPIO_PORT, &GPIO_InitStructure);
-#elif defined (HARDWARE_MODULE_WIFI_V3)
-    RCC_AHB1PeriphClockCmd(KEY0_GPIO_CLK,ENABLE);
-    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-
-    GPIO_InitStructure.GPIO_Pin   = KEY0_PIN;
-    GPIO_Init(KEY0_GPIO_PORT, &GPIO_InitStructure);
-
-#endif
 }
 
 

@@ -331,6 +331,7 @@ static DRV_WNET_ERR_CODE drv_wnet_read
     /* Error detection. */
     if( (drv_ptr == (void*)0) || (buffer_ptr == (void*)0) || (size == 0) )
     {
+        //rt_kprintf("7");
         return DRV_WNET_ERR_READ;
     }
 
@@ -449,6 +450,7 @@ static DRV_WNET_ERR_CODE wnet_ioctl_register_rxtc_isr
     /* Error detection. */
     if( (wnet_ptr == (void*)0) || (isr_ptr == (void*)0) )
     {
+        //rt_kprintf("8");
         return DRV_WNET_ERR_IOCTL;
     }
 

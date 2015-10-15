@@ -23,7 +23,7 @@ OSAL_DEBUG_ENTRY_DEFINE(vsa)
 #include "cv_vam.h"
 #include "cv_cms_def.h"
 #include "cv_vsa.h"
-#include "key.h"
+#include "cv_drv_key.h"
 #include "math.h"
 #include "arm_math.h"
 
@@ -51,6 +51,9 @@ static int ebd_judge(vsa_envar_t *p_vsa);
 extern void test_comm(void);
 extern uint8_t vam_get_gps_status(void);
 extern void param_get(void);
+
+
+static uint8_t eva_flag;/*evam flag,1-exist,0-none*/
 
 /*****************************************************************************
  * implementation of functions                                               *
@@ -418,6 +421,10 @@ void vsa_receive_eva_update(void *parameter)
     static uint8_t send_cnt ,cancel_cnt= 0;
     memcpy(&p_vsa->remote, p_sta, sizeof(vam_stastatus_t));
 
+    eva_flag = 1;
+
+    osal_timer_start(p_vsa->timer_eva_stop);
+
     if(p_sta ==NULL){
         if (p_vsa->alert_pend & (1<<VSA_ID_EVA))
             vsa_add_event_queue(p_vsa, VSA_MSG_X_RC, 0,0,NULL);
@@ -690,6 +697,20 @@ void timer_ebd_send_callback(void* parameter)
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "Cancel Emergency braking \n\n");
     sys_add_event_queue(&cms_envar.sys,SYS_MSG_ALARM_CANCEL, 0, VSA_ID_EBD, NULL);
                                             
+}
+
+void timer_eva_stop_callback(void* parameter)
+{
+    vsa_envar_t *p_vsa = (vsa_envar_t*)parameter;
+
+    if(eva_flag == 0){
+        if (p_vsa->alert_pend & (1<<VSA_ID_EVA))
+            vsa_add_event_queue(p_vsa, VSA_MSG_X_RC, 0,0,NULL);
+        osal_timer_stop(p_vsa->timer_eva_stop);
+    }
+    else if(eva_flag == 1){
+            eva_flag = 0;
+    }
 }
 
 static int ebd_judge(vsa_envar_t *p_vsa)
@@ -979,7 +1000,7 @@ uint32_t vsa_get_alarm(uint32_t vsa_id)
 static int vsa_manual_broadcast_proc(vsa_envar_t *p_vsa, void *arg)
 {
   int err = 1;  /* '1' represent is not handled. */ 
-  sys_msg_t *p_msg = (sys_msg_t *)arg;
+  sys_msg_st *p_msg = (sys_msg_st *)arg;
   
   if(p_msg->argc){
       vam_active_alert(VAM_ALERT_MASK_VBD);
@@ -1069,7 +1090,7 @@ static int vsa_side_alarm_proc(vsa_envar_t *p_vsa, void *arg)
 
 static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
-    sys_msg_t* p_msg = (sys_msg_t*)arg;   
+    sys_msg_st* p_msg = (sys_msg_st*)arg;
     vsa_position_node_t *p_node;    
     p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
 
@@ -1107,7 +1128,7 @@ static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 
 static int vsa_eebl_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
-    sys_msg_t* p_msg = (sys_msg_t*)arg;
+    sys_msg_st* p_msg = (sys_msg_st*)arg;
     vsa_position_node_t *p_node;    
     p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
     switch(p_msg->argc){
@@ -1139,7 +1160,7 @@ static int vsa_eebl_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 
 static int vsa_x_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
-    sys_msg_t* p_msg = (sys_msg_t*)arg;
+    sys_msg_st* p_msg = (sys_msg_st*)arg;
     vsa_position_node_t *p_node;    
     p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
     if (p_msg->len){
@@ -1173,7 +1194,7 @@ static int vsa_xx_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 static int vsa_xxx_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
 
-  sys_msg_t* p_msg = (sys_msg_t*)arg;
+  sys_msg_st* p_msg = (sys_msg_st*)arg;
   
   if (p_msg->len){
       p_vsa->alert_pend |= (1<<VSA_ID_RSA);
@@ -1288,7 +1309,7 @@ void vsa_base_proc(void *parameter)
 void vsa_thread_entry(void *parameter)
 {
     rt_err_t err;
-    sys_msg_t* p_msg = NULL;
+    sys_msg_st* p_msg = NULL;
     vsa_envar_t *p_vsa = (vsa_envar_t *)parameter;
 
 
@@ -1319,22 +1340,31 @@ osal_status_t vsa_add_event_queue(vsa_envar_t *p_vsa,
                              uint32_t msg_argc,
                              void    *msg_argv)
 {
-    int err = OSAL_STATUS_NOMEM;
-    sys_msg_t *p_msg;
+    int                err = OSAL_STATUS_SUCCESS;
+    sys_msg_st_ptr msg_ptr = NULL;
 
-    p_msg = osal_malloc(sizeof(sys_msg_t));
-    if (p_msg){
-        p_msg->id = msg_id;
-        p_msg->len = msg_len;
-        p_msg->argc = msg_argc;
-        p_msg->argv = msg_argv;
-        err = osal_queue_send(p_vsa->queue_vsa,p_msg);
+
+    msg_ptr = osal_malloc(SYS_MSG_ST_LEN);
+    
+    if (msg_ptr != NULL)
+    {
+        msg_ptr->id = msg_id;
+        msg_ptr->len = msg_len;
+        msg_ptr->argc = msg_argc;
+        msg_ptr->argv = msg_argv;
+
+        if (osal_queue_send(p_vsa->queue_vsa, msg_ptr) != OSAL_STATUS_SUCCESS)
+        {
+            osal_free(msg_ptr);
+            
+            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: Message queue send failed, msg = %04x. \n", __FUNCTION__, msg_id);
+            err = OSAL_STATUS_ERROR_UNDEFINED;
+        }  
     }
-
-    if (err != OSAL_STATUS_SUCCESS){
-        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: failed=[%d], msg=%04x\n",\
-                                   __FUNCTION__, err, msg_id);
-        osal_free(p_msg);
+    else
+    {
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: No enough memory for new message, msg = %04x. \n", __FUNCTION__, msg_id);
+        err = OSAL_STATUS_NOMEM;
     }
 
     return err;
@@ -1368,10 +1398,10 @@ void vsa_init()
         list_add_tail(&p_vsa->position_node[i].list, &p_vsa->position_list);
     }
     
-    for(i = 0;i < sizeof(vsa_app_handler_tbl)/sizeof(vsa_app_handler);i++){
-
-        if(p_vsa->vsa_mode&(1<<i)){
-            
+    for(i = 0; i < sizeof(vsa_app_handler_tbl)/sizeof(vsa_app_handler_tbl[0]); i++)
+    {
+        if(p_vsa->vsa_mode&(1<<i))
+        {
             vsa_app_handler_tbl[i] = NULL;
 
         }            
@@ -1379,36 +1409,37 @@ void vsa_init()
 
     p_vsa->alert_mask = (1<<VSA_ID_CRD)|(1<<VSA_ID_CRD_REAR)|(1<<VSA_ID_VBD)|(1<<VSA_ID_EBD);
 
-    /* os object for vsa */
-    p_vsa->queue_vsa = osal_queue_create("q-vsa",  VSA_QUEUE_SIZE);
-    osal_assert(p_vsa->queue_vsa != NULL);
-    
 
-    p_vsa->timer_ebd_send = osal_timer_create("tm-ebd",timer_ebd_send_callback,NULL,\
-        VSA_EBD_SEND_PERIOD,RT_TIMER_FLAG_ONE_SHOT);                     
+
+    /* Create a one shot timer to cancel emergency brake down alert after the specific time. */
+    p_vsa->timer_ebd_send = osal_timer_create("tm-ebd", timer_ebd_send_callback, NULL, VSA_EBD_SEND_PERIOD, RT_TIMER_FLAG_ONE_SHOT);                     
     osal_assert(p_vsa->timer_ebd_send != NULL);
 
-    p_vsa->timer_position_prepro = osal_timer_create("tm-pos",\
-        timer_preprocess_pos_callback,NULL,VSA_POS_PERIOD,RT_TIMER_FLAG_PERIODIC);
+    p_vsa->timer_eva_stop = osal_timer_create("tm-eva", timer_eva_stop_callback, p_vsa, VSA_EBD_SEND_PERIOD, RT_TIMER_FLAG_PERIODIC);                     
+    osal_assert(p_vsa->timer_eva_stop != NULL);
+
+
+    /* Semaphore for vsa local task use. */
+    p_vsa->sem_vsa_proc = osal_sem_create("sem-vsa", 0);
+    osal_assert(p_vsa->sem_vsa_proc != NULL);
+
+    /* Timer for trigging the vsa local task by Semaphore periodically. */
+    p_vsa->timer_position_prepro = osal_timer_create("tm-pos", timer_preprocess_pos_callback, NULL, VSA_POS_PERIOD, RT_TIMER_FLAG_PERIODIC);
     osal_assert(p_vsa->timer_position_prepro != NULL);
 
-    p_vsa->sem_vsa_proc = osal_sem_create("sem-vsa",0);
-    osal_assert(p_vsa->sem_vsa_proc != NULL);
-    
-    p_vsa->task_vsa_l = osal_task_create("t-vsa-l",
-                           vsa_base_proc, p_vsa,
-                           RT_VSA_THREAD_STACK_SIZE, RT_VSA_THREAD_PRIORITY);
+    /* Create vsa local task. */
+    p_vsa->task_vsa_l = osal_task_create("t-vsa-l", vsa_base_proc, p_vsa, RT_VSA_THREAD_STACK_SIZE, RT_VSA_THREAD_PRIORITY);
     osal_assert(p_vsa->task_vsa_l != NULL);
-    
-    p_vsa->task_vsa_r = osal_task_create("t-vsa-r",
-                           vsa_thread_entry, p_vsa,
-                           RT_VSA_THREAD_STACK_SIZE, RT_VSA_THREAD_PRIORITY);
+
+
+    /* Queue for vsa remote task use. */
+    p_vsa->queue_vsa = osal_queue_create("q-vsa",  VSA_QUEUE_SIZE);
+    osal_assert(p_vsa->queue_vsa != NULL);
+
+    /* Create vsa remote task. */
+    p_vsa->task_vsa_r = osal_task_create("t-vsa-r", vsa_thread_entry, p_vsa, RT_VSA_THREAD_STACK_SIZE, RT_VSA_THREAD_PRIORITY);
     osal_assert(p_vsa->task_vsa_r != NULL);
-/*
-    p_vsa->timer_eva = osal_timer_create("tm-eva",\
-        timer_preprocess_pos_callback,NULL,VSA_EBD_SEND_PERIOD,RT_TIMER_FLAG_PERIODIC);
-    osal_assert(p_vsa->timer_position_prepro != NULL);
-*/
+
 
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "module initial\n");
                              

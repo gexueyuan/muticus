@@ -303,6 +303,7 @@ READ_NEXT_FRAME:
     DRV_WNET_PTR->read(DRV_WNET_PTR, 0, WnetRxBuffer, sizeof(WnetRxBuffer));
 }
 
+
 #else
 
 
@@ -332,6 +333,7 @@ static void wnet_data_body_rxisr
         case WNET_F_MAJOR_TYPE_EVENT_REPORT:  {  break;  }
         case WNET_F_MAJOR_TYPE_RAW_DATA:      
         {  
+            //rt_kprintf("5 ");
             wnet_receive_enet((uint8_t *)main_header_ptr + WNET_MAIN_HEADER_ST_LEN,  \
                               main_header_ptr->length - sizeof(main_header_ptr->f_major_type) - sizeof(main_header_ptr->f_minor_type));
             break;  
@@ -339,6 +341,7 @@ static void wnet_data_body_rxisr
         default:                              {  break;  }
     }
 
+    //rt_kprintf("0");
     /* Receive the next frame. */
     wnet_receive_main(NULL);
 }
@@ -363,17 +366,20 @@ static void wnet_length_rxisr
     main_header_ptr->length = cv_ntohs(main_header_ptr->length);
 
     /* Read the rest data only when length data valid. */
-    if(main_header_ptr->length < (WNET_RX_BUFFER_SIZE - sizeof(main_header_ptr->magic_num1) - sizeof(main_header_ptr->magic_num2) - sizeof(main_header_ptr->length)))
+    if ( //(main_header_ptr->length != 0) &&
+         (main_header_ptr->length < (WNET_RX_BUFFER_SIZE - sizeof(main_header_ptr->magic_num1) - sizeof(main_header_ptr->magic_num2) - sizeof(main_header_ptr->length))) )
     {
         /* Active the frame body read operation. */
         DRV_WNET_PTR->ioctl(DRV_WNET_PTR, WNET_IOCTL_REGISTER_RXTC_ISR, &rx_tc_isr);
         DRV_WNET_PTR->read(DRV_WNET_PTR, 0, (uint8_t *)buffer_ptr + sizeof(main_header_ptr->magic_num1) \
                                           + sizeof(main_header_ptr->magic_num2) + sizeof(main_header_ptr->length), main_header_ptr->length);
+        //rt_kprintf("4");
     }
     else
     {
         /* Receive the next frame. */
         wnet_receive_main(NULL);
+        //rt_kprintf("4e");
     }
 }
 
@@ -398,11 +404,13 @@ static void wnet_magic_num2_rxisr
         /* Active the frame body read operation. */
         DRV_WNET_PTR->ioctl(DRV_WNET_PTR, WNET_IOCTL_REGISTER_RXTC_ISR, &rx_tc_isr);
         DRV_WNET_PTR->read(DRV_WNET_PTR, 0, (uint8_t *)buffer_ptr + sizeof(main_header_ptr->magic_num1) + sizeof(main_header_ptr->magic_num2), sizeof(main_header_ptr->length));   
+        //rt_kprintf("3");
     }
     else
     {
         /* Receive the next frame. */
         wnet_receive_main(NULL);
+        //rt_kprintf("3e");
     }
 }
 
@@ -426,12 +434,14 @@ static void wnet_magic_num1_rxisr
     {
         /* Active the frame body read operation. */
         DRV_WNET_PTR->ioctl(DRV_WNET_PTR, WNET_IOCTL_REGISTER_RXTC_ISR, &rx_tc_isr);
-        DRV_WNET_PTR->read(DRV_WNET_PTR, 0, (uint8_t *)buffer_ptr + sizeof(main_header_ptr->magic_num1), sizeof(main_header_ptr->magic_num2));   
+        DRV_WNET_PTR->read(DRV_WNET_PTR, 0, (uint8_t *)buffer_ptr + sizeof(main_header_ptr->magic_num1), sizeof(main_header_ptr->magic_num2)); 
+        //rt_kprintf("2");
     }
     else
     {
         /* Receive the next frame. */
         wnet_receive_main(NULL);
+        //rt_kprintf("2e");
     }
 }
 
@@ -455,7 +465,9 @@ void wnet_receive_main
     
     /* Active the frame header read operation. */
     DRV_WNET_PTR->ioctl(DRV_WNET_PTR, WNET_IOCTL_REGISTER_RXTC_ISR, &rx_tc_isr);
-    DRV_WNET_PTR->read(DRV_WNET_PTR, 0, WnetRxBuffer, sizeof(main_header_ptr->magic_num1));    
+    DRV_WNET_PTR->read(DRV_WNET_PTR, 0, WnetRxBuffer, sizeof(main_header_ptr->magic_num1));  
+
+    //rt_kprintf("1");
 }
 
 #endif

@@ -33,7 +33,7 @@ extern const drv_lcd_plane_st PicAlarmGroup[];
 #define PIC_INDEX_FRONT_ACCIDENT         0x0004
 #define PIC_INDEX_ATT_FRONT_XXX          0x0005
 #define PIC_INDEX_AVOID_AMBULANCE        0x0006
-
+#define PIC_INDEX_ATT_SHARP_BEND         0x0007
      
      
 /* Lcd information picture group. */
@@ -52,7 +52,7 @@ extern const drv_lcd_plane_st PicInforGroup[];
 #define PIC_INDEX_INFOR_NORMAL           0x0006
 #define PIC_INDEX_INFOR_BREAKDOWN        0x0007
      
-     
+#define PIC_INDEX_INFOR_GPS              0x0008     
      
      
      
