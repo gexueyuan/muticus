@@ -35,6 +35,8 @@ enum VSA_APP_ID
     VSA_ID_VBD,          /* Vehicle break down. */
     VSA_ID_EBD,          /* Vehicle emergency braking. */
     VSA_ID_VOT,          /* Vehicle overturned. */
+    VSA_ID_EVA,
+    VSA_ID_RSA,
     VSM_ID_END
 };
 
@@ -178,6 +180,8 @@ typedef struct _vsa_envar{
     osal_timer_t *timer_ebd_send;
 
     osal_timer_t *timer_position_prepro;
+
+    osal_timer_t *timer_eva;
                  
 }vsa_envar_t;
 

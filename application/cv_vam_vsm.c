@@ -109,7 +109,26 @@ void dump_pos_lite(vam_stastatus_t *p_sta)
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO,"lat:%f, lon:%f, speed:%f\n",\
                     p_sta->pos.lat,p_sta->pos.lon,p_sta->speed);
 }
+static uint32_t msg_type = RCP_MSG_ID_BSM;
+void vsm_set_msg_type(void)/**/
+{
+    static uint8_t changtype = 0xFF;
+    vam_envar_t *p_vam = &cms_envar.vam;
 
+    
+    changtype = ~changtype; 
+    
+    if(changtype == 0xFF){
+        msg_type = RCP_MSG_ID_BSM;
+        (p_vam->evt_handler[VAM_EVT_EVA_UPDATE])(NULL);
+    }
+    else if(changtype == 0){
+        msg_type = RCP_MSG_ID_EVAM;
+    }
+
+   // else if(type == 2)
+    //    msg_type = RCP_MSG_ID_RSA;
+}
 static uint8_t print_cnt = 0;
 void timer_send_bsm_callback(void* parameter)
 {
@@ -133,7 +152,7 @@ void timer_send_bsm_callback(void* parameter)
         #ifdef RSU_TEST
         vam_add_event_queue(p_vam, VAM_MSG_RCPTX, 0, RCP_MSG_ID_RSA, NULL);
         #else
-        vam_add_event_queue(p_vam, VAM_MSG_RCPTX, 0, RCP_MSG_ID_BSM, NULL);
+        vam_add_event_queue(p_vam, VAM_MSG_RCPTX, 0, msg_type, NULL);
         #endif
     }
         

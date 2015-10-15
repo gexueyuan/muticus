@@ -410,14 +410,59 @@ void vsa_receive_alarm_update(void *parameter)
     }
    
 }
+/*for test a ambulence*/
+void vsa_receive_eva_update(void *parameter)
+{
+    vam_stastatus_t *p_sta = (vam_stastatus_t *)parameter;
+    vsa_envar_t *p_vsa = &cms_envar.vsa;
+    static uint8_t send_cnt ,cancel_cnt= 0;
+    memcpy(&p_vsa->remote, p_sta, sizeof(vam_stastatus_t));
+
+    if(p_sta ==NULL){
+        if (p_vsa->alert_pend & (1<<VSA_ID_EVA))
+            vsa_add_event_queue(p_vsa, VSA_MSG_X_RC, 0,0,NULL);
+
+    }
+    else {
+        if (eva_judge(p_vsa)){
+            if ((!(p_vsa->alert_pend & (1<<VSA_ID_EVA)))&&(++send_cnt > 4)){
+                vsa_add_event_queue(p_vsa, VSA_MSG_X_RC, 1,0,NULL);
+                send_cnt = 0;
+            }
+        }
+        else{
+            if ((p_vsa->alert_pend & (1<<VSA_ID_EVA))&&(++cancel_cnt > 4)){
+                vsa_add_event_queue(p_vsa, VSA_MSG_X_RC, 0,0,NULL);
+                cancel_cnt = 0;
+            }
+        }
+
+        if(send_cnt > 4)
+            send_cnt = 4;
+
+        if(cancel_cnt > 4)
+            cancel_cnt = 4;
+    }
+}
+
 
 void vsa_receive_rsa_update(void *parameter)
 {
     vam_rsa_evt_info_t *param = (vam_rsa_evt_info_t*)parameter;
     vsa_envar_t *p_vsa = &cms_envar.vsa;
-
-    if(param->rsa_mask)
-        vsa_add_event_queue(p_vsa, VSA_MSG_XXX_RC, 0,0,NULL);
+    vam_stastatus_t local;   
+    int32_t dis_actual;//, dis_alert;
+    memset(&local,0,sizeof(vam_stastatus_t));
+    local.pos = param->pos;
+    //osal_printf("rsa  callback,mask is %d\n\n",param->rsa_mask);
+    dis_actual = vsm_get_relative_pos(&p_vsa->local,&local);
+    //osal_printf("rsa distance is %d\n",dis_actual);
+    if(dis_actual > 0){
+        if((!(p_vsa->alert_pend & (1<<VSA_ID_RSA))))//&&(dis_actual < 200))
+        vsa_add_event_queue(p_vsa, VSA_MSG_XXX_RC, param->rsa_mask,dis_actual,NULL);
+    }
+    else if (p_vsa->alert_pend & (1<<VSA_ID_RSA))
+        vsa_add_event_queue(p_vsa, VSA_MSG_XXX_RC, 0,dis_actual,NULL);
 
 }
 
@@ -435,6 +480,7 @@ void vsa_start(void)
     vam_set_event_handler(VAM_EVT_PEER_ALARM, vsa_receive_alarm_update);
     vam_set_event_handler(VAM_EVT_GPS_STATUS, vsa_gps_status_update);
     vam_set_event_handler(VAM_EVT_GSNR_EBD_DETECT, vsa_eebl_broadcast_update);
+    vam_set_event_handler(VAM_EVT_EVA_UPDATE, vsa_receive_eva_update);
     vam_set_event_handler(VAM_EVT_RSA_UPDATE, vsa_receive_rsa_update);
     osal_timer_start(p_vsa->timer_position_prepro);
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "%s: --->\n", __FUNCTION__);
@@ -888,6 +934,35 @@ static int crcw_judge(vsa_position_node_t *p_node)
     return VSA_ID_CRD_REAR;
 }
 
+static int eva_judge(vsa_envar_t *p_vsa)
+{
+    vsa_position_node_t *p_node;    
+    int32_t dis_actual, dis_alert;
+    p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
+
+    /* put the beginning only in order to output debug infomations */
+    dis_actual = p_node->vsa_position.linear_distance;
+    dis_alert = 4*p_vsa->working_param.crd_rear_distance;
+    /* end */
+
+  
+    
+    if (p_node->vsa_position.flag_dir < 0){
+        
+        return 0;
+    }
+
+    if (dis_actual >0){
+        return 0;
+    }
+
+    if ((-dis_actual) > dis_alert){
+        return 0;
+    }
+    return 1;
+}
+
+
 uint32_t vsa_get_alarm(uint32_t vsa_id)
 {
     vsa_envar_t *p_vsa = &cms_envar.vsa;
@@ -994,8 +1069,9 @@ static int vsa_side_alarm_proc(vsa_envar_t *p_vsa, void *arg)
 
 static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
-    sys_msg_t* p_msg = (sys_msg_t*)arg;
-    
+    sys_msg_t* p_msg = (sys_msg_t*)arg;   
+    vsa_position_node_t *p_node;    
+    p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
 
     switch(p_msg->argc){
 
@@ -1006,12 +1082,12 @@ static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
             p_vsa->remote.pid[0],p_vsa->remote.pid[1],p_vsa->remote.pid[2],p_vsa->remote.pid[3]);
              
             sys_add_event_queue(&cms_envar.sys, \
-                              SYS_MSG_START_ALERT, 0, VSA_ID_VBD, NULL);
+                              SYS_MSG_START_ALERT, p_node->vsa_position.linear_distance, VSA_ID_VBD, NULL);
         }
         else if (p_msg->len == 0){
                   /* inform system to stop alert */
             p_vsa->alert_pend &= ~(1<<VSA_ID_VBD);
-            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "Vehicle Breakdown Alert!!! Id:%02X%02X%02X%02X\n",\
+            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "Vehicle Breakdown Cancel!!! Id:%02X%02X%02X%02X\n",\
             p_vsa->remote.pid[0],p_vsa->remote.pid[1],p_vsa->remote.pid[2],p_vsa->remote.pid[3]);
             sys_add_event_queue(&cms_envar.sys, \
                               SYS_MSG_STOP_ALERT, 0, VSA_ID_VBD, NULL);
@@ -1032,7 +1108,8 @@ static int vsa_accident_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 static int vsa_eebl_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
     sys_msg_t* p_msg = (sys_msg_t*)arg;
-    
+    vsa_position_node_t *p_node;    
+    p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
     switch(p_msg->argc){
 
     case VAM_ALERT_MASK_EBD:
@@ -1042,7 +1119,7 @@ static int vsa_eebl_recieve_proc(vsa_envar_t *p_vsa, void *arg)
             p_vsa->remote.pid[0],p_vsa->remote.pid[1],p_vsa->remote.pid[2],p_vsa->remote.pid[3]);
              
             sys_add_event_queue(&cms_envar.sys, \
-                              SYS_MSG_START_ALERT, 0, VSA_ID_EBD, NULL);
+                              SYS_MSG_START_ALERT, p_node->vsa_position.linear_distance,VSA_ID_EBD, NULL);
         }
         else if (p_msg->len == 0){
                   /* inform system to stop alert */
@@ -1062,6 +1139,25 @@ static int vsa_eebl_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 
 static int vsa_x_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
+    sys_msg_t* p_msg = (sys_msg_t*)arg;
+    vsa_position_node_t *p_node;    
+    p_node = vsa_find_pn(p_vsa,p_vsa->remote.pid);
+    if (p_msg->len){
+        p_vsa->alert_pend |= (1<<VSA_ID_EVA);
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "Ambulance Passby!!! Id:%02X%02X%02X%02X\n",\
+        p_vsa->remote.pid[0],p_vsa->remote.pid[1],p_vsa->remote.pid[2],p_vsa->remote.pid[3]);
+         
+        sys_add_event_queue(&cms_envar.sys, \
+                          SYS_MSG_START_ALERT, p_node->vsa_position.linear_distance, VSA_ID_EVA, NULL);
+    }
+    else if (p_msg->len == 0){
+              /* inform system to stop alert */
+        p_vsa->alert_pend &= ~(1<<VSA_ID_EVA);
+        OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "Ambulance Cancel!!! Id:%02X%02X%02X%02X\n",\
+        p_vsa->remote.pid[0],p_vsa->remote.pid[1],p_vsa->remote.pid[2],p_vsa->remote.pid[3]);
+        sys_add_event_queue(&cms_envar.sys, \
+                          SYS_MSG_STOP_ALERT, 0, VSA_ID_EVA, NULL);
+    } 
 
 
   return 0;
@@ -1071,11 +1167,30 @@ static int vsa_xx_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
 
 
-  return 0;
+    return 0;
 }
 
 static int vsa_xxx_recieve_proc(vsa_envar_t *p_vsa, void *arg)
 {
+
+  sys_msg_t* p_msg = (sys_msg_t*)arg;
+  
+  if (p_msg->len){
+      p_vsa->alert_pend |= (1<<VSA_ID_RSA);
+      OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "RSA Alert!!!\n",);
+       
+      sys_add_event_queue(&cms_envar.sys, \
+                        SYS_MSG_START_ALERT, p_msg->argc, VSA_ID_RSA, NULL);
+  }
+  else if (p_msg->len == 0){
+            /* inform system to stop alert */
+      p_vsa->alert_pend &= ~(1<<VSA_ID_RSA);
+      OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "RSA Cancel!!!\n",);
+      sys_add_event_queue(&cms_envar.sys, \
+                        SYS_MSG_STOP_ALERT, 0, VSA_ID_RSA, NULL);
+  } 
+ 
+
 
 
   return 0;
@@ -1289,8 +1404,11 @@ void vsa_init()
                            vsa_thread_entry, p_vsa,
                            RT_VSA_THREAD_STACK_SIZE, RT_VSA_THREAD_PRIORITY);
     osal_assert(p_vsa->task_vsa_r != NULL);
-
-
+/*
+    p_vsa->timer_eva = osal_timer_create("tm-eva",\
+        timer_preprocess_pos_callback,NULL,VSA_EBD_SEND_PERIOD,RT_TIMER_FLAG_PERIODIC);
+    osal_assert(p_vsa->timer_position_prepro != NULL);
+*/
 
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "module initial\n");
                              

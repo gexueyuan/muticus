@@ -35,11 +35,15 @@ static uint32_t phase = 0;
 #define VBD_VOC "[2]前方有故障车"  
 
 #define FRONT "前方"
+#define REAR "后方"
 #define EEBL "急刹"
 #define VBD  "故障"
 #define CFCW "车距"
 #define MI "米"
 
+#define AMBU "救护车"
+#define GIVEWAY "请避让"
+#define CURVE "弯道"
 char  play_string[50];
 uint32_t voc_distance;
 
@@ -122,9 +126,9 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     case HI_OUT_VBD_ALERT:
         //data = VBD_VOC;
         strcpy(play_string,FRONT);
-        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
         strcat(play_string,MI);
         strcat(play_string,VBD);
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
         //osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
@@ -132,12 +136,33 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     case HI_OUT_EBD_ALERT:
         //data = EEBL_VOC;
         strcpy(play_string,FRONT);
-        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
         strcat(play_string,MI);
         strcat(play_string,EEBL);
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
         //osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
+
+    case HI_OUT_EVA_ALERT:
+        //data = EEBL_VOC;
+        strcpy(play_string,REAR);
+        //strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        //strcat(play_string,MI);
+        strcat(play_string,AMBU);
+        strcat(play_string,GIVEWAY);
+        //osal_printf("string is %s\n",play_string);
+        data= play_string;
+        break;
+        
+    case HI_OUT_RSA_ALERT:
+        //data = EEBL_VOC;
+        strcpy(play_string,FRONT);      
+        strcat(play_string,CURVE);
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);
+        data= play_string;
+        break;
+        
     
     default:
 
