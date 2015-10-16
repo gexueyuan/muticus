@@ -963,7 +963,7 @@ static int eva_judge(vsa_envar_t *p_vsa)
 
     /* put the beginning only in order to output debug infomations */
     dis_actual = p_node->vsa_position.linear_distance;
-    dis_alert = 4*p_vsa->working_param.crd_rear_distance;
+    dis_alert = 5*p_vsa->working_param.crd_rear_distance;
     /* end */
 
     if ((p_node->vsa_position.local_speed + p_vsa->working_param.crd_oppsite_rear_speed) > p_node->vsa_position.remote_speed){

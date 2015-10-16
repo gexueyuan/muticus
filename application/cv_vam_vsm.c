@@ -333,9 +333,13 @@ void vam_update_sta(vam_envar_t *p_vam)
         {
             OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "one neighbour's alert is timeout to canceled.\n");  
             p_sta_node->s.alert_mask = 0;
-            p_sta[num_peer_alert_timeout] = (vam_stastatus_t *)osal_malloc(sizeof(vam_stastatus_t));
-            memcpy(p_sta[num_peer_alert_timeout], &p_sta_node->s, sizeof(vam_stastatus_t));
-            num_peer_alert_timeout++;
+            if(p_vam->evt_handler[VAM_EVT_PEER_ALARM]){
+                p_sta[num_peer_alert_timeout] = (vam_stastatus_t *)osal_malloc(sizeof(vam_stastatus_t));
+                if (p_sta[num_peer_alert_timeout] != NULL){
+                    memcpy(p_sta[num_peer_alert_timeout], &p_sta_node->s, sizeof(vam_stastatus_t));
+                    num_peer_alert_timeout++;
+                }
+            }
         }
 
         if (p_sta_node->life == 0 && p_sta_node->alert_life == 0)
@@ -357,6 +361,9 @@ void vam_update_sta(vam_envar_t *p_vam)
                 p_sta[num_peer_alert_timeout]->pid[1], p_sta[num_peer_alert_timeout]->pid[2], p_sta[num_peer_alert_timeout]->pid[3]);
 #endif
             (p_vam->evt_handler[VAM_EVT_PEER_ALARM])(p_sta[num_peer_alert_timeout]);
+            if (p_sta[num_peer_alert_timeout] != NULL){
+                osal_free(p_sta[num_peer_alert_timeout]);
+            }
         }
     }
 

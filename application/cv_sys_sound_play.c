@@ -126,9 +126,9 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     case HI_OUT_VBD_ALERT:
         //data = VBD_VOC;
         strcpy(play_string,FRONT);
-        strcat(play_string,MI);
         strcat(play_string,VBD);
-        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));       
+        strcat(play_string,MI);
         //osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
@@ -136,10 +136,10 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     case HI_OUT_EBD_ALERT:
         //data = EEBL_VOC;
         strcpy(play_string,FRONT);
-        strcat(play_string,MI);
         strcat(play_string,EEBL);
         strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
-        //osal_printf("string is %s\n",play_string);
+        strcat(play_string,MI);
+
         data= play_string;
         break;
 
@@ -246,6 +246,7 @@ void sound_alert_process(void* parameter)
         }
         else {
             notice_di_play_once(sound_play_complete);
+            //notice_di_play_once(NULL);
         }
     }
 }
