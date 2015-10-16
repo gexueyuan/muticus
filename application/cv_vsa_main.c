@@ -464,7 +464,7 @@ void vsa_receive_rsa_update(void *parameter)
     //osal_printf("rsa  callback,mask is %d\n\n",param->rsa_mask);
     dis_actual = vsm_get_relative_pos(&p_vsa->local,&local);
     //osal_printf("rsa distance is %d\n",dis_actual);
-    if(dis_actual > 0){
+    if(rsa_judge(p_vsa,dis_actual) > 0){
         if((!(p_vsa->alert_pend & (1<<VSA_ID_RSA))))//&&(dis_actual < 200))
         vsa_add_event_queue(p_vsa, VSA_MSG_XXX_RC, param->rsa_mask,dis_actual,NULL);
     }
@@ -827,7 +827,7 @@ static int cfcw_judge(vsa_position_node_t *p_node)
         return 0;    
     }
         
-    if (p_node->vsa_position.local_speed <= (p_node->vsa_position.remote_speed +\
+    if (p_node->vsa_position.local_speed < (p_node->vsa_position.remote_speed +\
         p_vsa->working_param.crd_oppsite_speed)){       
         return 0;
     }
@@ -927,7 +927,7 @@ static int crcw_judge(vsa_position_node_t *p_node)
     return VSA_ID_CRD_REAR;
     }    
 #endif
-    if ((p_node->vsa_position.local_speed + p_vsa->working_param.crd_oppsite_speed) >= p_node->vsa_position.remote_speed){
+    if ((p_node->vsa_position.local_speed + p_vsa->working_param.crd_oppsite_rear_speed) > p_node->vsa_position.remote_speed){
         
         return 0;
     }
@@ -966,7 +966,10 @@ static int eva_judge(vsa_envar_t *p_vsa)
     dis_alert = 4*p_vsa->working_param.crd_rear_distance;
     /* end */
 
-  
+    if ((p_node->vsa_position.local_speed + p_vsa->working_param.crd_oppsite_rear_speed) > p_node->vsa_position.remote_speed){
+        
+        return 0;
+    }
     
     if (p_node->vsa_position.flag_dir < 0){
         
@@ -980,6 +983,25 @@ static int eva_judge(vsa_envar_t *p_vsa)
     if ((-dis_actual) > dis_alert){
         return 0;
     }
+    return 1;
+}
+static int rsa_judge(vsa_envar_t *p_vsa,int32_t dis)
+{
+    int32_t dis_actual, dis_alert;
+    static uint8_t speed_cnt = 0,dis_cnt = 0;
+    /* put the beginning only in order to output debug infomations */
+    dis_actual = dis;
+
+    if( p_vsa->local.speed < p_vsa->working_param.danger_detect_speed_threshold){
+
+        return 0;
+
+    }
+
+    if (dis_actual < 0){
+        return 0;
+    }
+      
     return 1;
 }
 
@@ -1415,7 +1437,7 @@ void vsa_init()
     p_vsa->timer_ebd_send = osal_timer_create("tm-ebd", timer_ebd_send_callback, NULL, VSA_EBD_SEND_PERIOD, RT_TIMER_FLAG_ONE_SHOT);                     
     osal_assert(p_vsa->timer_ebd_send != NULL);
 
-    p_vsa->timer_eva_stop = osal_timer_create("tm-eva", timer_eva_stop_callback, p_vsa, VSA_EBD_SEND_PERIOD, RT_TIMER_FLAG_PERIODIC);                     
+    p_vsa->timer_eva_stop = osal_timer_create("tm-eva", timer_eva_stop_callback, p_vsa, VSA_EBD_SEND_PERIOD/5, RT_TIMER_FLAG_PERIODIC);                     
     osal_assert(p_vsa->timer_eva_stop != NULL);
 
 
