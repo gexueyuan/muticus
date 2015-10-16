@@ -174,13 +174,6 @@ void fp_tx_complete(wnet_envar_t *p_wnet)
     
     osal_leave_critical();
 
-#if 0
-    /* Kick out next frame */
-    if (!list_empty(p_txbuf_waiting_list)) 
-    {
-        osal_sem_release(p_wnet->sem_wnet_tx);
-    }
-#endif
 }
 
 

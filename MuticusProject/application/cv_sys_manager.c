@@ -173,7 +173,13 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_st *p_msg)
         }
         else if (p_msg->argc == VSA_ID_EBD){
             type = HI_OUT_EBD_ALERT;
-        }  
+        }    
+        else if (p_msg->argc == VSA_ID_EVA){
+            type = HI_OUT_EVA_ALERT;
+        }
+        else if (p_msg->argc == VSA_ID_RSA){
+            type = HI_OUT_RSA_ALERT;
+        }
         hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,p_msg->len,type, 0);
         break;
         
@@ -191,6 +197,12 @@ void sys_manage_proc(sys_envar_t *p_sys, sys_msg_st *p_msg)
         }
         else if (p_msg->argc == VSA_ID_EBD){
             type = HI_OUT_EBD_CANCEL;
+        }   
+        else if (p_msg->argc == VSA_ID_EVA){
+            type = HI_OUT_EVA_CANCEL;
+        }
+        else if (p_msg->argc == VSA_ID_RSA){
+            type = HI_OUT_RSA_CANCEL;
         }
         //don't distinguish  message of  alert canceling   for the time being
         hi_add_event_queue(p_sys, SYS_MSG_HI_OUT_UPDATE,0,type, 0);
@@ -330,6 +342,30 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_st *p_msg)
             }
             break;
 
+        case HI_OUT_EVA_ALERT:
+           
+            sound_alert_start(HI_OUT_EVA_ALERT,p_msg->len);
+            if(p_sys->status&(1<<HI_OUT_EVA_ALERT)){
+                return;
+            }
+            else{
+                p_sys->status |= 1<<HI_OUT_EVA_ALERT;
+                OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI EVA alert!!\n\n");
+            }
+            break;
+
+        case HI_OUT_RSA_ALERT:
+           
+            sound_alert_start(HI_OUT_RSA_ALERT,p_msg->len);
+            if(p_sys->status&(1<<HI_OUT_RSA_ALERT)){
+                return;
+            }
+            else{
+                p_sys->status |= 1<<HI_OUT_RSA_ALERT;
+                OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI RSA alert!!\n\n");
+            }
+            break;
+
         case HI_OUT_CRD_CANCEL:
             
             if(alarm_state == 0) {
@@ -368,6 +404,25 @@ void sys_human_interface_proc(sys_envar_t *p_sys, sys_msg_st *p_msg)
             OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI EEBL alert  cancel!!\n\n");
             break;
             
+        case HI_OUT_EVA_CANCEL://cancel alarm
+        
+            if(alarm_state == 0) {
+                sound_alert_stop();
+            }
+            p_sys->status &= ~(1<<HI_OUT_EVA_ALERT);
+            OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI EVA alert  cancel!!\n\n");
+            break;
+
+        case HI_OUT_RSA_CANCEL://cancel alarm
+        
+            if(alarm_state == 0) {
+                sound_alert_stop();
+            }
+            p_sys->status &= ~(1<<HI_OUT_RSA_ALERT);
+            OSAL_MODULE_DBGPRT(MODULE_NAME,OSAL_DEBUG_INFO,"HI RSA alert  cancel!!\n\n");
+            break;
+            
+
         case HI_OUT_VBD_STATUS:
             p_sys->status |= 1<<HI_OUT_VBD_STATUS;
             break;

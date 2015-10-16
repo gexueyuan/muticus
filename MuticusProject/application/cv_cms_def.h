@@ -145,6 +145,12 @@ enum HI_OUT_TYPE
     HI_OUT_EBD_CANCEL,
     HI_OUT_EBD_STATUS,
     HI_OUT_EBD_STOP,
+
+    HI_OUT_EVA_ALERT,          /* 救护车 */
+    HI_OUT_EVA_CANCEL,
+
+    HI_OUT_RSA_ALERT,          /* 弯道路测 */
+    HI_OUT_RSA_CANCEL,
     
     HI_OUT_CANCEL_ALERT,
 };

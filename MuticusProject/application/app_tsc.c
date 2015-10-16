@@ -20,7 +20,7 @@
 
 /* Vehicle parameter. */
 extern sys_param_st SysParam;
-
+extern void vsm_set_msg_type(void);/**/
 
 /**
   * @brief  Tsc none operation handler.
@@ -115,6 +115,8 @@ static void tsc_operation_release
         {
             /* Update vehicle mode. */
             SysParam.vec_param.vec_mode = (VEC_VECMODE_INDEX_MAX <= SysParam.vec_param.vec_mode)? VEC_VECMODE_INDEX_MIN : SysParam.vec_param.vec_mode + 1;
+            
+            vsm_set_msg_type();
         }
         else if( ((TSC_OBJCOOR_BREAKDOWNMODE_LDX <= touch_pre_ptr->coor_x) && (touch_pre_ptr->coor_x <= TSC_OBJCOOR_BREAKDOWNMODE_RUX))
               && ((TSC_OBJCOOR_BREAKDOWNMODE_LDY <= touch_pre_ptr->coor_y) && (touch_pre_ptr->coor_y <= TSC_OBJCOOR_BREAKDOWNMODE_RUY)) )

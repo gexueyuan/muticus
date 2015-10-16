@@ -87,10 +87,12 @@ void vam_main_proc(vam_envar_t *p_vam, sys_msg_st *p_msg)
             if (p_msg->argc == RCP_MSG_ID_BSM)
             {
                 rcp_send_bsm(p_vam);
+                OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_TRACE, "send bsm\n");
             }
             if (p_msg->argc == RCP_MSG_ID_EVAM)
             {
                 rcp_send_evam(p_vam);
+                OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_TRACE, "send evam\n");
             }
             if (p_msg->argc == RCP_MSG_ID_RSA)
             {

@@ -109,36 +109,47 @@ void dump_pos_lite(vam_stastatus_t *p_sta)
     OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO,"lat:%f, lon:%f, speed:%f\n",\
                     p_sta->pos.lat,p_sta->pos.lon,p_sta->speed);
 }
+static uint32_t msg_type = RCP_MSG_ID_BSM;
+void vsm_set_msg_type(void)/**/
+{
+    static uint8_t changtype = 0xFF;
+    
+    changtype = ~changtype; 
+    
+    if(changtype == 0xFF){
+        msg_type = RCP_MSG_ID_BSM;
+    }
+    else if(changtype == 0){
+        msg_type = RCP_MSG_ID_EVAM;
+    }
 
+   // else if(type == 2)
+    //    msg_type = RCP_MSG_ID_RSA;
+}
 static uint8_t print_cnt = 0;
 void timer_send_bsm_callback(void* parameter)
 {
     vam_envar_t *p_vam = (vam_envar_t *)parameter;
 
     static uint8_t count = VAM_NO_ALERT_EVAM_TX_TIMES;
-    if (p_vam->flag & VAM_FLAG_TX_BSM_ALERT)
-    {
+    if (p_vam->flag&VAM_FLAG_TX_BSM_ALERT){
         /* 所有alter已取消 */
-        if (p_vam->local.alert_mask == 0)
-        {
+        if (p_vam->local.alert_mask == 0){
             /* 发送VAM_NO_ALERT_EVAM_TX_TIMES次后停止发送bsm alter消息数据 */
-            if (0 == count--)
-            {
+            if (0 == count--){
                 p_vam->flag &= ~VAM_FLAG_TX_BSM_ALERT;
             }
         }
-        else
-        {
+        else{
             count = VAM_NO_ALERT_EVAM_TX_TIMES;
         }
     }
 
-    if ((p_vam->flag&VAM_FLAG_TX_BSM)&&(!(p_vam->flag&VAM_FLAG_TX_BSM_PAUSE)))
-    {
+    if ((p_vam->flag&VAM_FLAG_TX_BSM)&&(!(p_vam->flag&VAM_FLAG_TX_BSM_PAUSE))){
         #ifdef RSU_TEST
         vam_add_event_queue(p_vam, VAM_MSG_RCPTX, 0, RCP_MSG_ID_RSA, NULL);
         #else
-        vam_add_event_queue(p_vam, VAM_MSG_RCPTX, 0, RCP_MSG_ID_BSM, NULL);
+        vam_add_event_queue(p_vam, VAM_MSG_RCPTX, 0, msg_type, NULL);
         #endif
     }
         
@@ -322,9 +333,13 @@ void vam_update_sta(vam_envar_t *p_vam)
         {
             OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "one neighbour's alert is timeout to canceled.\n");  
             p_sta_node->s.alert_mask = 0;
-            p_sta[num_peer_alert_timeout] = (vam_stastatus_t *)osal_malloc(sizeof(vam_stastatus_t));
-            memcpy(p_sta[num_peer_alert_timeout], &p_sta_node->s, sizeof(vam_stastatus_t));
-            num_peer_alert_timeout++;
+            if(p_vam->evt_handler[VAM_EVT_PEER_ALARM]){
+                p_sta[num_peer_alert_timeout] = (vam_stastatus_t *)osal_malloc(sizeof(vam_stastatus_t));
+                if (p_sta[num_peer_alert_timeout] != NULL){
+                    memcpy(p_sta[num_peer_alert_timeout], &p_sta_node->s, sizeof(vam_stastatus_t));
+                    num_peer_alert_timeout++;
+                }
+            }
         }
 
         if (p_sta_node->life == 0 && p_sta_node->alert_life == 0)
@@ -346,6 +361,9 @@ void vam_update_sta(vam_envar_t *p_vam)
                 p_sta[num_peer_alert_timeout]->pid[1], p_sta[num_peer_alert_timeout]->pid[2], p_sta[num_peer_alert_timeout]->pid[3]);
 #endif
             (p_vam->evt_handler[VAM_EVT_PEER_ALARM])(p_sta[num_peer_alert_timeout]);
+            if (p_sta[num_peer_alert_timeout] != NULL){
+                osal_free(p_sta[num_peer_alert_timeout]);
+            }
         }
     }
 

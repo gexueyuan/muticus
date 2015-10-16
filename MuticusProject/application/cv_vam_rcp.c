@@ -206,28 +206,28 @@ __COMPILE_INLINE__ uint16_t encode_itiscode(uint16_t rsa_mask, __packed itis_cod
     return r;
 }
 
+static void itiscode_2_rsa_mask(itis_codes_t type, uint16_t *rsa_mask)
+{
+    int i = 0;
+    for (i=0; i<RSA_TYPE_MAX; i++)
+    {
+        if (itiscode[i] == type){
+           *rsa_mask |= 1<<i;
+           break;
+        }
+    }
+}
 __COMPILE_INLINE__ uint16_t decode_itiscode(itis_codes_t typeEvent, __packed itis_codes_t *p_des)
 {
     uint16_t k = 0;
 	uint16_t rsa_mask = 0;
 	uint16_t i, r;
     r = cv_ntohs(typeEvent);
-    goto getbitmask;
-    
+    itiscode_2_rsa_mask(r, &rsa_mask);    
     for(k=0; k<8; k++)
     {
         r = cv_ntohs(p_des[k]);
-getbitmask:
-        if (r)
-        {
-            for (i=0; i<RSA_TYPE_MAX; i++)
-            {
-                if (itiscode[i] == r){
-                   rsa_mask |= 1<<i;
-                   break;
-                }
-            }
-        }
+        itiscode_2_rsa_mask(r, &rsa_mask);    
     }
     return rsa_mask;
 }
@@ -389,7 +389,7 @@ int rcp_parse_evam(vam_envar_t *p_vam,
 
         /* inform the app layer once */
         if (p_vam->evt_handler[VAM_EVT_EVA_UPDATE]){
-            (p_vam->evt_handler[VAM_EVT_EVA_UPDATE])(&p_sta->s);
+            (p_vam->evt_handler[VAM_EVT_EVA_UPDATE])(&p_sta->s);/*don't have type data*/
         }
     }
     return 0;
@@ -441,6 +441,8 @@ int rcp_parse_msg(vam_envar_t *p_vam,
     {
         case RCP_MSG_ID_BSM:
         {
+            
+            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_TRACE, "recieve bsm!\n");
             rcp_parse_bsm(p_vam, rxinfo, databuf, datalen);
             break;
         }
@@ -453,6 +455,7 @@ int rcp_parse_msg(vam_envar_t *p_vam,
             {
                 vsm_pause_bsm_broadcast(p_vam);
             }
+            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_TRACE, "recieve evam!\n");
             rcp_parse_evam(p_vam, rxinfo, databuf, datalen);
             break;
         }
@@ -589,7 +592,10 @@ int32_t rcp_send_evam(vam_envar_t *p_vam)
     p_evam->rsa.position.elev = encode_elevation(p_local->pos.elev);
     p_evam->rsa.position.heading = encode_heading(p_local->dir);
     p_evam->rsa.position.speed.transmissionState = TRANS_STATE_Forward;
-    p_evam->rsa.position.speed.speed = encode_speed(p_local->speed);  
+    p_evam->rsa.position.speed.speed = encode_speed(p_local->speed);
+
+    p_evam->vehicleType = VehicleType_special;
+    p_evam->responderType = ResponderGroupAffected_emergency_vehicle_units;
     //TBD
     p_evam->rsa.typeEvent = encode_itiscode(p_local->alert_mask, p_evam->rsa.description); 
     

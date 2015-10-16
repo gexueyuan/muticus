@@ -217,32 +217,13 @@ static void lcd_vec_param_init
     }
     else if(param_ptr->sys_mode == SYS_SYSMODE_ALARM)
     {
-        if(param_ptr->alarm_stat & (1 << HI_OUT_EBD_ALERT))
-        {
-            alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_FRONT_VEC_BRAKE];
-        }
-        else if(param_ptr->alarm_stat & (1 << HI_OUT_VBD_ALERT))
-        {
-            alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_FRONT_VEC_FAULTY];
-        }
-        else if(param_ptr->alarm_stat & (1 << HI_OUT_CRD_ALERT))
-        {
-            alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_ATT_FRONT_VEC];
-        }
-        else if(param_ptr->alarm_stat & (1 << HI_OUT_CRD_REAR_ALERT))
-        {
-            alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_ATT_REAR_VEC];
-        }
-        
-/*      else if(param_ptr->alarm_stat & (1 << HI_OUT_VBD_ALERT))
-        {
-            alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_FRONT_VEC_FAULTY];
-        }
-        else if(param_ptr->alarm_stat & (1 << HI_OUT_VBD_ALERT))
-        {
-            alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_FRONT_VEC_FAULTY];
-        }
-*/
+        if(param_ptr->alarm_stat & (1 << HI_OUT_EBD_ALERT))          {  alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_FRONT_VEC_BRAKE];  }
+        else if(param_ptr->alarm_stat & (1 << HI_OUT_VBD_ALERT))     {  alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_FRONT_VEC_FAULTY]; }
+        else if(param_ptr->alarm_stat & (1 << HI_OUT_CRD_ALERT))     {  alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_ATT_FRONT_VEC];    }
+        else if(param_ptr->alarm_stat & (1 << HI_OUT_CRD_REAR_ALERT)){  alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_ATT_REAR_VEC];     }
+        else if(param_ptr->alarm_stat & (1 << HI_OUT_RSA_ALERT))     {  alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_ATT_SHARP_BEND];   }
+        else if(param_ptr->alarm_stat & (1 << HI_OUT_EVA_ALERT))     {  alarm.plane_ptr = &PicAlarmGroup[PIC_INDEX_AVOID_AMBULANCE];  }
+
         /* Fresh data to lcd layer. */
         DRV_LCD_PTR->ioctl(DRV_LCD_PTR, LCD_IOCTL_DRAW_BLOCK, &alarm);
     }
@@ -382,7 +363,8 @@ void lcd_sys_param_init
 )
 {
     /* Initial alarm status. */
-    sys_param_ptr->alarm_stat = sys_envar_ptr->status & ((1<<HI_OUT_VBD_ALERT) | (1<<HI_OUT_CRD_ALERT) | (1<<HI_OUT_CRD_REAR_ALERT) | (1<<HI_OUT_EBD_ALERT));
+    sys_param_ptr->alarm_stat = sys_envar_ptr->status & ((1<<HI_OUT_VBD_ALERT) | (1<<HI_OUT_CRD_ALERT) | (1<<HI_OUT_CRD_REAR_ALERT) 
+                                                       | (1<<HI_OUT_EBD_ALERT) | (1<<HI_OUT_EVA_ALERT) | (1<<HI_OUT_RSA_ALERT));
   
     /* Initial system mode. */
     sys_param_ptr->sys_mode = (sys_param_ptr->alarm_stat != 0) ? SYS_SYSMODE_ALARM : SYS_SYSMODE_NORMAL;
