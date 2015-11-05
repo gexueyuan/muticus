@@ -13,6 +13,8 @@
 #define __CV_WNET_H__
 
 #include "list.h"
+#include "cv_osal_rtt.h"
+
 
 #ifdef __cplusplus
 #if __cplusplus

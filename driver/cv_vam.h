@@ -157,21 +157,20 @@ typedef struct _vam_sta_node
 
 typedef struct _vam_config
 {
-
     /* Basic Safty Message TX function:  */
-    uint8_t                             bsm_hops;   /* BSM message max hops number. */
+    uint8_t                    bsm_hops;   /* BSM message max hops number. */
     uint8_t          bsm_boardcast_mode;   /* 0 - disable, 1 - auto, 2 - fixed period */ 
-    uint8_t bsm_boardcast_saftyfactor;   /* 1~10 */
-    uint8_t                bsm_pause_mode;   /* 0 - disable, 1-tx evam enable, 2-rx evam pause bsm*/
+    uint8_t   bsm_boardcast_saftyfactor;   /* 1~10 */
+    uint8_t              bsm_pause_mode;   /* 0 - disable, 1 - tx evam enable, 2-rx evam pause bsm*/
     uint8_t         bsm_pause_hold_time;   /* unit:s */
-    uint16_t       bsm_boardcast_period;  /* 100~3000, unit:ms, min accuracy :10ms */
+    uint16_t       bsm_boardcast_period;   /* 100~3000, unit:ms, min accuracy :10ms */
 
     /* Emergency Vehicle Alert Message TX function: */
-    uint8_t                        evam_hops;      /* EVAM message max hops number. */
+    uint8_t                   evam_hops;   /* EVAM message max hops number. */
 	
-    uint8_t      evam_broadcast_type;      /* 0 - disable, 1 - auto, 2 - fixed period. */
+    uint8_t         evam_broadcast_type;   /* 0 - disable, 1 - auto, 2 - fixed period. */
 	
-    uint16_t evam_broadcast_peroid;      /* EVAM message broadcast period: ms. */
+    uint16_t      evam_broadcast_peroid;   /* EVAM message broadcast period: ms. */
     
 
 }vam_config_t;

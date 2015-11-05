@@ -313,10 +313,10 @@ static void lcd_vec_infor_init
     uint8_t i = 0;
     
     
-    char buffer_lon[20]   = "Lon:";
-    char buffer_lat[20]   = "Lat:";
-    char buffer_dir[20]   = "Dir:";
-    char buffer_speed[20] = "Spd:";
+    char buffer_lon[40]   = "Longitude:";
+    char buffer_lat[40]   = " Latitude:";
+    char buffer_dir[40]   = "Direction:";
+    char buffer_speed[40] = "    Speed:";
     
     drv_lcd_string_display_st infor_group[4] = 
     {
@@ -333,8 +333,9 @@ static void lcd_vec_infor_init
 
     sprintf(&(buffer_lon[strlen(buffer_lon)]), "%f", local_status.pos.lon);
     sprintf(&(buffer_lat[strlen(buffer_lat)]), "%f", local_status.pos.lat);
-    sprintf(&(buffer_dir[strlen(buffer_dir)]), "%f", local_status.dir);
-    sprintf(&(buffer_speed[strlen(buffer_speed)]), "%f", local_status.speed);
+    sprintf(&(buffer_dir[strlen(buffer_dir)]), "%0.2f", local_status.dir);
+    sprintf(&(buffer_speed[strlen(buffer_speed)]), "%0.2f", local_status.speed);
+    sprintf(&(buffer_speed[strlen(buffer_speed)]), "km/h");
 
     for(i = 0; i < 4; i++)
     {

@@ -21,7 +21,6 @@ extern "C"{
 #endif
 #endif /* __cplusplus */
 
-#define __COMPILE_PACK__  __packed
 
 /*
     ----4 Byts---
@@ -83,6 +82,24 @@ typedef enum _WAVE_AID {
     WAVE_AID_signed_WSA                    = 24,
 } E_WAVE_AID;
 
+
+
+/*
+ *  CAUTION:
+ *      The sentence "declaration __attribute__ ((aligned(x)))" can not be working in this IDE. 
+ *      We can use this parameter to make the storage larger then the natural size; but we can not make the storage 
+ *  smaller than the natural size.
+ *  
+ * */
+
+/* Save all the compiler settings. */
+#pragma push
+
+/* store data to reduce data size and off the optimization. */
+#pragma pack(1)
+
+
+
 typedef struct _wave_element {  
     uint8_t  element_id;
     uint8_t  length;
@@ -90,7 +107,7 @@ typedef struct _wave_element {
 } wave_element_t;
 
 /* dsmp frame header, same as WSMP frame defined by IEEE1609.3 */
-typedef __COMPILE_PACK__ struct _dsmp_hdr 
+typedef struct _dsmp_hdr 
 {
     uint8_t     version;
     uint32_t        aid;    /* "psid" of WSMP  */
@@ -128,6 +145,14 @@ typedef struct _dsa_hdr {
     uint8_t change_cnt:2;
     wave_element_t *ext;
 } dsa_hdr_t;
+
+
+
+/* restore all compiler settings in stacks. */
+#pragma pop
+
+
+
 
 
 #ifdef __cplusplus

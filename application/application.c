@@ -191,4 +191,5 @@ int rt_application_init_dummy()
     return 0;
 }
 
-/*@}*/
+
+

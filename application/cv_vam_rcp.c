@@ -39,7 +39,7 @@ float rcp_dbg_distance = 0;
 *****************************************************************************/
 
 
-__COMPILE_INLINE__ int32_t encode_longtitude(float x)
+__COMPILE_INLINE__ int32_t encode_longitude(float x)
 {
     int32_t r;
     r = (int32_t)(x*10000000.0f);
@@ -47,18 +47,18 @@ __COMPILE_INLINE__ int32_t encode_longtitude(float x)
 }
 
 
-__COMPILE_INLINE__ float decode_longtitude(uint32_t x)
+__COMPILE_INLINE__ float decode_longitude(uint32_t x)
 {
     float r;
     r = ((int32_t)cv_ntohl(x)) / 10000000.0f;
     return (float)r;
 }
 
-#define encode_latitude(x) encode_longtitude(x) 
-#define decode_latitude(x) decode_longtitude(x) 
+#define encode_latitude(x) encode_longitude(x) 
+#define decode_latitude(x) decode_longitude(x) 
 
-#define encode_accuracy(x) encode_longtitude(x) 
-#define decode_accuracy(x) decode_longtitude(x) 
+#define encode_accuracy(x) encode_longitude(x) 
+#define decode_accuracy(x) decode_longitude(x) 
 
 __COMPILE_INLINE__ uint16_t encode_elevation(float x)
 {
@@ -143,6 +143,8 @@ __COMPILE_INLINE__ float decode_acce_yaw(uint8_t x)
 __COMPILE_INLINE__ uint16_t encode_vehicle_alert(uint16_t x)
 {
     uint16_t r = 0;
+
+    
     if (x & VAM_ALERT_MASK_VBD){
         r |= EventHazardLights;        
     }
@@ -170,6 +172,8 @@ __COMPILE_INLINE__ uint16_t encode_vehicle_alert(uint16_t x)
 __COMPILE_INLINE__ uint16_t decode_vehicle_alert(uint16_t x)
 {
     uint16_t r = 0;
+
+    
     x = cv_ntohs(x);
     if (x & EventHazardLights) {
         r |= VAM_ALERT_MASK_VBD;        
@@ -269,17 +273,18 @@ int rcp_parse_bsm
     uint32_t datalen
 )
 {
-    vam_sta_node_t *p_sta;
-    rcp_msg_basic_safty_t *p_bsm;
-    uint16_t alert_mask;  
+    vam_sta_node_t        *p_sta = NULL;
+    rcp_msg_basic_safty_t *p_bsm = (rcp_msg_basic_safty_t *)databuf;
+    uint16_t          alert_mask = 0;  
 
 
+    /* Return error when data length less than a valid BSM frame. */
     if (datalen < (sizeof(rcp_msg_basic_safty_t) - sizeof(vehicle_safety_ext_t)))
     {
         return -1;
     }
 
-    p_bsm = (rcp_msg_basic_safty_t *)databuf;
+    /* Jump out when receiving my own BSM frame. */
     if (0 == memcmp(p_bsm->header.temporary_id, p_vam->local.pid, RCP_TEMP_ID_LEN))
     {
         return 0;
@@ -290,16 +295,14 @@ int rcp_parse_bsm
 
     p_sta = vam_find_sta(p_vam, p_bsm->header.temporary_id);
 
-    if (p_sta)
+    if (p_sta != NULL)
     {
         p_sta->life = VAM_NEIGHBOUR_MAXLIFE;
         p_sta->s.timestamp = p_bsm->dsecond;
         
-        /* BEGIN: Added by wanglei, 2014/10/16 */
         p_sta->s.time = osal_get_systemtime();
-        /* END:   Added by wanglei, 2014/10/16 */
 
-        p_sta->s.pos.lon = decode_longtitude(p_bsm->position.lon);
+        p_sta->s.pos.lon = decode_longitude(p_bsm->position.lon);
         p_sta->s.pos.lat = decode_latitude(p_bsm->position.lat);
         p_sta->s.pos.elev = decode_elevation(p_bsm->position.elev);
         p_sta->s.pos.accu = decode_accuracy(p_bsm->position.accu);
@@ -311,7 +314,7 @@ int rcp_parse_bsm
         p_sta->s.acce.vert = decode_acce_vert(p_bsm->motion.acce.vert);
         p_sta->s.acce.yaw = decode_acce_yaw(p_bsm->motion.acce.yaw);
 
-        //dump_pos(&p_sta->s);
+       
         /* for test  */
         if (1 == g_dbg_print_type){
             rcp_dbg_distance = vsm_get_distance(&p_vam->local.pos, &p_sta->s.pos); 
@@ -373,7 +376,7 @@ int rcp_parse_evam(vam_envar_t *p_vam,
         p_sta->s.time = osal_get_systemtime();
         /* END:   Added by wanglei, 2014/10/16 */
 
-        p_sta->s.pos.lon = decode_longtitude(p_evam->rsa.position.lon);
+        p_sta->s.pos.lon = decode_longitude(p_evam->rsa.position.lon);
         p_sta->s.pos.lat = decode_latitude(p_evam->rsa.position.lat);
         p_sta->s.pos.elev = decode_elevation(p_evam->rsa.position.elev);
 
@@ -411,8 +414,8 @@ int rcp_parse_rsa(vam_envar_t *p_vam,
     p_rsa = (rcp_msg_roadside_alert_t *)databuf;
 
     param.rsa_mask = decode_itiscode(p_rsa->typeEvent, p_rsa->description);
-    param.pos.lon = decode_longtitude(p_rsa->position.lon);
-    param.pos.lat = decode_longtitude(p_rsa->position.lat);
+    param.pos.lon = decode_longitude(p_rsa->position.lon);
+    param.pos.lat = decode_longitude(p_rsa->position.lat);
 
     if (p_vam->evt_handler[VAM_EVT_RSA_UPDATE]){
         (p_vam->evt_handler[VAM_EVT_RSA_UPDATE])(&param);
@@ -523,7 +526,7 @@ int32_t rcp_send_bsm(vam_envar_t *p_vam)
     }
     p_bsm->dsecond = rcp_get_system_time();
 
-    p_bsm->position.lon = encode_longtitude(p_local->pos.lon);
+    p_bsm->position.lon = encode_longitude(p_local->pos.lon);
     p_bsm->position.lat = encode_latitude(p_local->pos.lat);
     p_bsm->position.elev = encode_elevation(p_local->pos.elev);
     p_bsm->position.accu = encode_accuracy(p_local->pos.accu);
@@ -587,7 +590,7 @@ int32_t rcp_send_evam(vam_envar_t *p_vam)
 
 
     p_evam->rsa.msg_count = p_vam->tx_evam_msg_cnt++;
-    p_evam->rsa.position.lon = encode_longtitude(p_local->pos.lon);
+    p_evam->rsa.position.lon = encode_longitude(p_local->pos.lon);
     p_evam->rsa.position.lat = encode_latitude(p_local->pos.lat);
     p_evam->rsa.position.elev = encode_elevation(p_local->pos.elev);
     p_evam->rsa.position.heading = encode_heading(p_local->dir);
@@ -641,7 +644,7 @@ int32_t rcp_send_rsa(vam_envar_t *p_vam)
 
     p_rsa->typeEvent = encode_itiscode(p_local->alert_mask, p_rsa->description);
         
-    p_rsa->position.lon = encode_longtitude(p_local->pos.lon);
+    p_rsa->position.lon = encode_longitude(p_local->pos.lon);
     p_rsa->position.lat = encode_latitude(p_local->pos.lat);
     p_rsa->position.elev = encode_elevation(p_local->pos.elev);
     p_rsa->position.heading = encode_heading(p_local->dir);
@@ -770,7 +773,7 @@ void timer_test_bsm_rx_callback(void* parameter)
     memcpy(p_bsm->header.temporary_id, p_local->pid, RCP_TEMP_ID_LEN);
     p_bsm->dsecond = rcp_get_system_time();
 
-    p_bsm->position.lon = encode_longtitude(p_local->pos.lon);
+    p_bsm->position.lon = encode_longitude(p_local->pos.lon);
     p_bsm->position.lat = encode_latitude(p_local->pos.lat);
     p_bsm->position.elev = encode_elevation(p_local->pos.elev);
     p_bsm->position.accu = encode_accuracy(p_local->pos.accu);

@@ -385,15 +385,16 @@ void mode_set(uint16_t mode)
     drv_fls_read(PARAM_ADDR_MOUNTAIN,(uint8_t*)&all_param[2],sizeof(cfg_param_t));
     drv_fls_read(PARAM_ADDR_CITY,(uint8_t*)&all_param[3],sizeof(cfg_param_t));
 
-
-
     drv_fls_erase(PARAM_SECTOR);
+    
     drv_fls_write(PARAM_FLAG_ADDR,param_init_words,sizeof(param_init_words));    
     drv_fls_write(PARAM_MODE_ADDR,(uint8_t *)&param_mode,sizeof(uint16_t));
+    
     drv_fls_write(PARAM_ADDR_CUSTOM,(uint8_t*)&all_param[0],sizeof(cfg_param_t));
     drv_fls_write(PARAM_ADDR_HIGHWAY,(uint8_t*)&all_param[1],sizeof(cfg_param_t));
     drv_fls_write(PARAM_ADDR_MOUNTAIN,(uint8_t*)&all_param[2],sizeof(cfg_param_t));
     drv_fls_write(PARAM_ADDR_CITY,(uint8_t*)&all_param[3],sizeof(cfg_param_t));
+    
     rt_kprintf("mode = %d  write in flash\n", param_mode);
 
 }

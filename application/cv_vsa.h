@@ -141,6 +141,14 @@ typedef struct _vsa_config{
 	
 }vsa_config_t;
 
+typedef struct _vsa_node {
+     /* !!!DON'T modify it!!! */
+    list_head_t list;
+
+    uint32_t vsa_app_id;
+
+    uint8_t pid[RCP_TEMP_ID_LEN];  //temporary ID   
+} vsa_node_t;
 
 typedef struct _vsa_envar{
     
@@ -161,6 +169,7 @@ typedef struct _vsa_envar{
 
 	/*List head*/	
     list_head_t crd_list;
+    list_head_t alarm_list;
     list_head_t position_list;
     vsa_position_node_t position_node[VAM_NEIGHBOUR_MAXNUM];
     

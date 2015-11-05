@@ -30,81 +30,27 @@
 *****************************************************************************/
 
 #define EARTH_RADIUS  6371.004f
-//#define PI 3.1415926f
+
+#define PI 3.1415926f
 #define RAD(d) ((d)*PI/180.0f)
-
-
-#define _COMPILE_INLINE__
-
-
-_COMPILE_INLINE__ uint16_t cv_ntohs(uint16_t s16);
-
-__COMPILE_INLINE__ uint32_t cv_ntohl(uint32_t l32);
-
-__COMPILE_INLINE__ float cv_ntohf(float f32);
-
-
-__COMPILE_INLINE__ int32_t encode_longtitude(float x);
-
-
-__COMPILE_INLINE__ float decode_longtitude(uint32_t x);
-
-#define encode_latitude(x) encode_longtitude(x) 
-#define decode_latitude(x) decode_longtitude(x) 
-
-#define encode_accuracy(x) encode_longtitude(x) 
-#define decode_accuracy(x) decode_longtitude(x) 
-
-__COMPILE_INLINE__ uint16_t encode_elevation(float x);
-
-__COMPILE_INLINE__ float decode_elevation(uint16_t x);
-
-__COMPILE_INLINE__ uint16_t encode_speed(float x);
-
-
-__COMPILE_INLINE__ float decode_speed(uint16_t x);
-
-__COMPILE_INLINE__ uint16_t encode_heading(float x);
-
-__COMPILE_INLINE__ float decode_heading(uint16_t x);
-
-__COMPILE_INLINE__ uint16_t encode_acce_lon(float x);
-
-__COMPILE_INLINE__ float decode_acce_lon(uint16_t x);
-__COMPILE_INLINE__ uint16_t encode_acce_lat(float x);
-
-__COMPILE_INLINE__ float decode_acce_lat(uint16_t x);
-
-__COMPILE_INLINE__ uint16_t encode_acce_vert(float x);
-
-__COMPILE_INLINE__ float decode_acce_vert(uint16_t x);
-
-__COMPILE_INLINE__ uint8_t encode_acce_yaw(float x);
-
-__COMPILE_INLINE__ float decode_acce_yaw(uint8_t x);
-
-
-
-
-
 
 
 /*****************************************************************************
  * implementation of functions                                               *
 *****************************************************************************/
 
-#if 0
+#if 1
 static float getDistanceVer1(float lat1, float lng1, float lat2, float lng2)
 
 {
 
-   float radLat1 = rad(lat1);
+   float radLat1 = lat1;
 
-   float radLat2 = rad(lat2);
+   float radLat2 = lat2;
 
-   float radLng1 = rad(lng1);
+   float radLng1 = lng1;
 
-   float radLng2 = rad(lng2);
+   float radLng2 = lng2;
 
    float s = acos(sin(radLat1)*sin(radLat2)+cos(radLat1)*cos(radLat2)*cos(radLng1-radLng2));
 
@@ -249,8 +195,17 @@ vam_pos_data vsm_get_data(vam_stastatus_t *p_src, vam_stastatus_t *p_dest)
     lat3 = lat1;
     lng3 = lng2;
 
-    distance_1_2 = getDistanceVer2(lat1, lng1, lat2, lng2);
-    distance_2_3 = getDistanceVer2(lat2, lng2, lat3, lng3);
+    distance_1_2 = getDistanceVer1(lat1, lng1, lat2, lng2);
+    distance_2_3 = getDistanceVer1(lat2, lng2, lat3, lng3);
+	
+	if (distance_2_3 > distance_1_2){
+        
+    	OSAL_DBGPRT(OSAL_DEBUG_WARN, "23=%f, 12=%f\r\n", distance_2_3, distance_1_2);	  
+	  	OSAL_DBGPRT(OSAL_DEBUG_WARN, "lat1=%f, lng1=%f, lat2=%f, lng2=%f\r\n", lat1, lng1, lat2, lng2);	  
+
+	}
+	
+
     angle = acosf(distance_2_3/distance_1_2)*180/PI;
     
     pos_data.distance_1_2 = distance_1_2;
@@ -336,8 +291,14 @@ float vsm_get_relative_pos(vam_stastatus_t *p_src, vam_stastatus_t *p_dest)
     lat3 = lat1;
     lng3 = lng2;
 
-    distance_1_2 = getDistanceVer2(lat1, lng1, lat2, lng2);
-    distance_2_3 = getDistanceVer2(lat2, lng2, lat3, lng3);
+    distance_1_2 = getDistanceVer1(lat1, lng1, lat2, lng2);
+    distance_2_3 = getDistanceVer1(lat2, lng2, lat3, lng3);
+	
+	if (distance_2_3 > distance_1_2){
+    	OSAL_DBGPRT(OSAL_DEBUG_WARN, "23=%f, 12=%f\r\n", distance_2_3, distance_1_2);	  
+	  	OSAL_DBGPRT(OSAL_DEBUG_WARN, "lat1=%f, lng1=%f, lat2=%f, lng2=%f\r\n", lat1, lng1, lat2, lng2);	  
+    }
+
     angle = acosf(distance_2_3/distance_1_2)*180/PI;
 
     /* calculate the relative angle against north, clockwise  */

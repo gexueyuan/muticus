@@ -37,7 +37,7 @@ static uint32_t phase = 0;
 #define FRONT "前方"
 #define REAR "后方"
 #define EEBL "急刹"
-#define VBD  "故障"
+#define VBD  "故障车"
 #define CFCW "车距"
 #define MI "米"
 
@@ -105,7 +105,16 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     uint32_t length = 0;
     char distance_char[10];
     memset(play_string,0,sizeof(play_string));   
+		
+	voc_distance = (voc_distance + 5)/10;
 
+	voc_distance = 10 * voc_distance; 
+		
+	if(voc_distance < 30)
+		voc_distance = 10;
+	else
+		voc_distance = voc_distance - 20;
+		
     switch (alert_type) {
                
     case HI_OUT_CRD_ALERT:
@@ -126,9 +135,10 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     case HI_OUT_VBD_ALERT:
         //data = VBD_VOC;
         strcpy(play_string,FRONT);
-        strcat(play_string,VBD);
         strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));       
-        strcat(play_string,MI);
+        strcat(play_string,MI);		
+        strcat(play_string,VBD);
+
         //osal_printf("string is %s\n",play_string);
         data= play_string;
         break;
@@ -136,9 +146,11 @@ static void voice_play_once(uint32_t alert_type, void *complete)
     case HI_OUT_EBD_ALERT:
         //data = EEBL_VOC;
         strcpy(play_string,FRONT);
+	      strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+        strcat(play_string,MI);	
+		
         strcat(play_string,EEBL);
-        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
-        strcat(play_string,MI);
+
 
         data= play_string;
         break;
@@ -156,10 +168,11 @@ static void voice_play_once(uint32_t alert_type, void *complete)
         
     case HI_OUT_RSA_ALERT:
         //data = EEBL_VOC;
-        strcpy(play_string,FRONT);      
+        strcpy(play_string,FRONT);  
+       // strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
+       // strcat(play_string,MI);    
         strcat(play_string,CURVE);
-        strcat(play_string,(const char*)itoa(voc_distance,distance_char,10));
-        strcat(play_string,MI);
+
         data= play_string;
         break;
         
@@ -245,7 +258,7 @@ void sound_alert_process(void* parameter)
             }
         }
         else {
-            notice_di_play_once(sound_play_complete);
+            //notice_di_play_once(sound_play_complete);
             //notice_di_play_once(NULL);
         }
     }

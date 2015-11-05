@@ -22,6 +22,7 @@
 
 
 void vam_list_sta(void);
+extern  int vsa_ccw_stop(uint8_t *pid_t);
 /*****************************************************************************
  * declaration of variables and functions                                    *
 *****************************************************************************/
@@ -40,6 +41,8 @@ void vam_list_sta(void);
 static uint16_t _cal_peroid_from_speed(float speed, uint8_t bsm_boardcast_saftyfactor)
 {
     uint16_t period = 100;
+
+    
     if(0 == speed)
     {
         period = 3000;
@@ -47,7 +50,7 @@ static uint16_t _cal_peroid_from_speed(float speed, uint8_t bsm_boardcast_saftyf
     else
     {
         /* parameter speed, unit: km/h */
-        period = bsm_boardcast_saftyfactor*3600/speed;
+        period = bsm_boardcast_saftyfactor * 3600 / speed;
     }
     period = period < 100 ? 100 : (period > 3000 ? 3000 : period/10*10);
     return period;
@@ -160,18 +163,20 @@ void vsm_update_bsm_bcast_timer(vam_envar_t *p_vam)
 {
     uint16_t period;
     uint32_t timeout;
+
+    
     if(p_vam->working_param.bsm_boardcast_mode == BSM_BC_MODE_AUTO)
     {
         period = _cal_peroid_from_speed(p_vam->local.speed, p_vam->working_param.bsm_boardcast_saftyfactor);
     }
     else
     {
-        /* neighbour count <= 50, bsm send period 100ms
-           neighbour count > 50,  bsm send period 200ms */
-        if (p_vam->neighbour_cnt > 50){
+        if (p_vam->neighbour_cnt > 50)
+        {
             period = 200;
         }
-        else {
+        else 
+        {
             period = p_vam->working_param.bsm_boardcast_period;
         }
     }
@@ -281,19 +286,23 @@ vam_sta_node_t *vam_find_sta(vam_envar_t *p_vam, uint8_t *temporary_id)
     if (p_sta == NULL)
     {
         osal_sem_take(p_vam->sem_sta, RT_WAITING_FOREVER);
-    	if (!list_empty(&p_vam->sta_free_list)) {
+        
+    	if (!list_empty(&p_vam->sta_free_list)) 
+        {
     		p_sta = list_first_entry(&p_vam->sta_free_list, vam_sta_node_t, list);
     		list_move(&p_sta->list, &p_vam->neighbour_list);
     	}
+        
         osal_sem_release(p_vam->sem_sta);
 
-        if (p_sta){
+        if (p_sta != NULL)
+        {
             p_vam->neighbour_cnt ++;
 			memcpy(p_sta->s.pid, temporary_id, RCP_TEMP_ID_LEN);  
             OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "one neighbour join\n");
-            //memcpy(p_sta->s.pid, temporary_id, RCP_TEMP_ID_LEN);        
         }
-        else{
+        else
+        {
             OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_WARN, "%s: no free sta.\n", __FUNCTION__);
         }
     }
@@ -307,35 +316,41 @@ void vam_update_sta(vam_envar_t *p_vam)
     vam_sta_node_t *p_sta_node = NULL;
     list_head_t *pos;
     list_head_t *head = &p_vam->neighbour_list;
-    vam_stastatus_t *p_sta[VAM_NEIGHBOUR_MAXNUM];
+    vam_stastatus_t *p_sta[VAM_NEIGHBOUR_MAXNUM] = { NULL };
+    
     static uint8_t gotNeighbour = 0;
     uint8_t isEmpty = 1;
+    
     uint8_t num_peer_alert_timeout = 0;
 
-    if (osal_sem_take(p_vam->sem_sta, RT_WAITING_FOREVER) != RT_EOK){
+
+    if (osal_sem_take(p_vam->sem_sta, RT_WAITING_FOREVER) != RT_EOK)
+    {
         OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_ERROR, "semaphor return failed\n");
         return;
     }
 
-    for (pos = head->next; pos != (head); ){
+    for (pos = head->next; pos != (head); )
+    {
         isEmpty = 0;
         gotNeighbour = 1;
         /* must prefatch the next pointer */
         p_sta_node = (vam_sta_node_t *)pos;
         pos = pos->next;
 
-        if(p_sta_node->life)
-            p_sta_node->life--;
-        if(p_sta_node->alert_life)
-            p_sta_node->alert_life--;
-        
+        /* Update node's life and alert life counter. */
+        p_sta_node->life = (0 < p_sta_node->life)? (p_sta_node->life - 1) : 0;
+        p_sta_node->alert_life = (0 < p_sta_node->alert_life)? (p_sta_node->alert_life - 1) : 0;
+  
         if ((p_sta_node->alert_life == 0) && (p_sta_node->s.alert_mask) )
         {
             OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "one neighbour's alert is timeout to canceled.\n");  
             p_sta_node->s.alert_mask = 0;
-            if(p_vam->evt_handler[VAM_EVT_PEER_ALARM]){
+            if(p_vam->evt_handler[VAM_EVT_PEER_ALARM])
+            {
                 p_sta[num_peer_alert_timeout] = (vam_stastatus_t *)osal_malloc(sizeof(vam_stastatus_t));
-                if (p_sta[num_peer_alert_timeout] != NULL){
+                if (p_sta[num_peer_alert_timeout] != NULL)
+                {
                     memcpy(p_sta[num_peer_alert_timeout], &p_sta_node->s, sizeof(vam_stastatus_t));
                     num_peer_alert_timeout++;
                 }
@@ -344,24 +359,28 @@ void vam_update_sta(vam_envar_t *p_vam)
 
         if (p_sta_node->life == 0 && p_sta_node->alert_life == 0)
         {
-            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "one neighbour is kick out\n");
+            OSAL_MODULE_DBGPRT(MODULE_NAME, OSAL_DEBUG_INFO, "one neighbour is kick out\n");           
+            vsa_ccw_stop(p_sta_node->s.pid);
+
+           // memset(&(p_sta_node->s), 0 sizeof(vam_stastatus_t));
+            
             list_move_tail(&p_sta_node->list, &p_vam->sta_free_list);
             p_vam->neighbour_cnt--;
-
         }
     }
+
     osal_sem_release(p_vam->sem_sta);
 
     /* one neighbours's alert msg timeout */
-    if(p_vam->evt_handler[VAM_EVT_PEER_ALARM]){
-        while(num_peer_alert_timeout > 0){
+    if(p_vam->evt_handler[VAM_EVT_PEER_ALARM])
+    {
+        while(num_peer_alert_timeout > 0)
+        {
             num_peer_alert_timeout--;
-#if 0
-            osal_printf("%dPID=%02x %02x %02x %02x\r\n", num_peer_alert_timeout, p_sta[num_peer_alert_timeout]->pid[0], 
-                p_sta[num_peer_alert_timeout]->pid[1], p_sta[num_peer_alert_timeout]->pid[2], p_sta[num_peer_alert_timeout]->pid[3]);
-#endif
+
             (p_vam->evt_handler[VAM_EVT_PEER_ALARM])(p_sta[num_peer_alert_timeout]);
-            if (p_sta[num_peer_alert_timeout] != NULL){
+            if (p_sta[num_peer_alert_timeout] != NULL)
+            {
                 osal_free(p_sta[num_peer_alert_timeout]);
             }
         }

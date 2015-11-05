@@ -224,7 +224,6 @@ void fp_rx_handler(wnet_envar_t *p_wnet)
     
     if (rxbuf)
     {
-        /* if (llc_recv(p_wnet, &rxbuf->info, rxbuf->data_ptr, rxbuf->data_len) < 0) */ 
         if (enet_receive(p_wnet, &rxbuf->info, rxbuf->data_ptr, rxbuf->data_len) < 0)
         {
             fp_release_rxbuf(p_wnet, rxbuf);
